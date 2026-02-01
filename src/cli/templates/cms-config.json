@@ -1,0 +1,27 @@
+{
+  "api": {
+    "baseUrl": "https://your-cms-api.com/api",
+    "apiKey": "YOUR_API_KEY"
+  },
+  "components": {
+    "hero_section": {
+      "label": "Hero Sectie",
+      "fields": [
+        { "name": "title", "type": "text", "label": "Hoofdtitel" },
+        { "name": "subtitle", "type": "textarea", "label": "Subtitel" },
+        { "name": "image", "type": "media", "label": "Achtergrond foto" }
+      ]
+    },
+    "text_area": {
+      "label": "Tekst Blok",
+      "fields": [{ "name": "content", "type": "richtext", "label": "Inhoud" }]
+    }
+  },
+  "pages": [
+    {
+      "slug": "home",
+      "title": "Homepagina",
+      "allowed_blocks": ["hero_section", "text_area"]
+    }
+  ]
+}
