@@ -47,44 +47,40 @@ export class CmsClient {
    * Get a page by its slug, including all its components with content
    */
   async getPage(slug: string): Promise<Page> {
-    const response = await this.request<ApiResponse<Page>>(`/pages/${slug}`);
-    return response.data;
+    return this.request<Page>(`/pages/${slug}`);
   }
 
   /**
    * Get a form by its slug
    */
   async getForm(slug: string): Promise<FormDefinition> {
-    const response = await this.request<ApiResponse<FormDefinition>>(`/forms/${slug}`);
-    return response.data;
+    return this.request<FormDefinition>(`/forms/${slug}`);
   }
 
   /**
    * Submit a form
    */
   async submitForm(slug: string, data: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
-    const response = await this.request<ApiResponse<{ success: boolean; message?: string }>>(
+    return this.request<{ success: boolean; message?: string }>(
       `/forms/${slug}/submit`,
       {
         method: 'POST',
         body: JSON.stringify(data),
       }
     );
-    return response.data;
   }
 
   /**
    * Sync local cms-config.json structure to the server
    */
   async syncStructure(config: Omit<CmsConfig, 'api'>): Promise<{ success: boolean; message?: string }> {
-    const response = await this.request<ApiResponse<{ success: boolean; message?: string }>>(
+    return this.request<{ success: boolean; message?: string }>(
       '/sync-structure',
       {
         method: 'POST',
         body: JSON.stringify(config),
       }
     );
-    return response.data;
   }
 }
 
