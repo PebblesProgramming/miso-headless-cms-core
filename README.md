@@ -5,27 +5,22 @@ TypeScript client and React components for MISO Headless CMS.
 ## Installation
 
 ```bash
-npm install @miso-software/headless-cms-core
+# SSH
+npm install git+ssh://git@github.com/PebblesProgramming/miso-headless-cms-core.git
+
+# HTTPS (with Personal Access Token)
+npm install git+https://github.com/PebblesProgramming/miso-headless-cms-core.git
 ```
 
 ## Setup
 
-Initialize a config file in your project:
-
-```Option A: SSH (if you have SSH keys set up)
-  npm install git+ssh://git@github.com/PebblesProgramming/miso-headless-cms-core.git
-```
-
-```Option B: HTTPS with Personal Access Token
-  npm install git+https://github.com/PebblesProgramming/miso-headless-cms-core.git
-  (This will prompt for credentials, or you can use a token)
-```
+### 1. Initialize config (for CLI)
 
 ```bash
 npx cms init
 ```
 
-This creates `cms-config.json`. Update it with your API URL and key:
+This creates `cms-config.json` for defining your components and pages:
 
 ```json
 {
@@ -38,7 +33,16 @@ This creates `cms-config.json`. Update it with your API URL and key:
 }
 ```
 
-Sync your config to the server:
+### 2. Environment variables (for client)
+
+Add to your `.env.local`:
+
+```env
+NEXT_PUBLIC_CMS_API_URL=https://your-cms-api.com/api
+NEXT_PUBLIC_CMS_API_KEY=your-api-key
+```
+
+### 3. Sync to server
 
 ```bash
 npx cms sync
@@ -49,7 +53,14 @@ npx cms sync
 ```typescript
 import { createCmsClient } from "@miso-software/headless-cms-core";
 
+// Option 1: Uses environment variables
 const cms = createCmsClient();
+
+// Option 2: Pass config directly
+const cms = createCmsClient({
+  baseUrl: "https://your-cms-api.com/api",
+  apiKey: "your-api-key",
+});
 
 // Get a page with all its components
 const page = await cms.getPage("home");
@@ -68,13 +79,12 @@ await cms.submitForm("contact", {
 ## React Components
 
 ```tsx
-import {
-  CmsBlock,
-  CmsPage,
-  registerBlockRenderer,
-} from "@miso-software/headless-cms-core/ui";
+"use client";
 
-// Register how each component type should render
+import { createCmsClient } from "@miso-software/headless-cms-core";
+import { CmsBlock, registerBlockRenderer } from "@miso-software/headless-cms-core/ui";
+
+// Register renderers for your component types
 registerBlockRenderer("hero_section", ({ content, className }) => (
   <section className={className}>
     <h1>{content.title as string}</h1>
@@ -82,22 +92,39 @@ registerBlockRenderer("hero_section", ({ content, className }) => (
   </section>
 ));
 
-// Render a single block
-<CmsBlock
-  slug="hero_section"
-  id={1}
-  content={{ title: "Hello", subtitle: "World" }}
-/>;
+registerBlockRenderer("text_area", ({ content, className }) => (
+  <div className={className} dangerouslySetInnerHTML={{ __html: content.content as string }} />
+));
 
-// Or render an entire page
-const page = await cms.getPage("home");
-<CmsPage components={page.components} />;
+// Use in your components
+export default function MyPage() {
+  const [page, setPage] = useState(null);
+
+  useEffect(() => {
+    createCmsClient().getPage("home").then(setPage);
+  }, []);
+
+  if (!page) return <div>Loading...</div>;
+
+  return (
+    <div>
+      {page.components.map((component) => (
+        <CmsBlock
+          key={component.id}
+          slug={component.component_slug}
+          id={component.id}
+          content={component.data}
+        />
+      ))}
+    </div>
+  );
+}
 ```
 
 ## CLI Commands
 
-| Command        | Description               |
-| -------------- | ------------------------- |
-| `npx cms init` | Create `cms-config.json`  |
-| `npx cms sync` | Sync config to CMS server |
-| `npx cms help` | Show help                 |
+| Command        | Description                              |
+| -------------- | ---------------------------------------- |
+| `npx cms init` | Create `cms-config.json`                 |
+| `npx cms sync` | Sync components & pages to CMS server    |
+| `npx cms help` | Show help                                |
