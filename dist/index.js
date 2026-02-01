@@ -29,41 +29,37 @@ var CmsClient = class {
    * Get a page by its slug, including all its components with content
    */
   async getPage(slug) {
-    const response = await this.request(`/pages/${slug}`);
-    return response.data;
+    return this.request(`/pages/${slug}`);
   }
   /**
    * Get a form by its slug
    */
   async getForm(slug) {
-    const response = await this.request(`/forms/${slug}`);
-    return response.data;
+    return this.request(`/forms/${slug}`);
   }
   /**
    * Submit a form
    */
   async submitForm(slug, data) {
-    const response = await this.request(
+    return this.request(
       `/forms/${slug}/submit`,
       {
         method: "POST",
         body: JSON.stringify(data)
       }
     );
-    return response.data;
   }
   /**
    * Sync local cms-config.json structure to the server
    */
   async syncStructure(config) {
-    const response = await this.request(
+    return this.request(
       "/sync-structure",
       {
         method: "POST",
         body: JSON.stringify(config)
       }
     );
-    return response.data;
   }
 };
 function createCmsClient(config) {
