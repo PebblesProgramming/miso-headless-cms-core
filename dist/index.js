@@ -14,7 +14,7 @@ var CmsClient = class {
       ...options,
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.apiKey}`,
+        "X-API-Key": this.apiKey,
         "Accept": "application/json",
         ...options.headers
       }
