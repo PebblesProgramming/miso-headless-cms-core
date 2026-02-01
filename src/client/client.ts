@@ -52,57 +52,33 @@ export class CmsClient {
   }
 
   /**
-   * Get all available component definitions
+   * Get a form by its slug
    */
-  async getComponentDefinitions(): Promise<ComponentDefinition[]> {
-    const response = await this.request<ApiResponse<ComponentDefinition[]>>('/component-definitions');
-    return response.data;
-  }
-
-  /**
-   * Get a specific component definition by slug
-   */
-  async getComponentDefinition(slug: string): Promise<ComponentDefinition> {
-    const response = await this.request<ApiResponse<ComponentDefinition>>(`/component-definitions/${slug}`);
-    return response.data;
-  }
-
-  /**
-   * Get all available form definitions
-   */
-  async getFormDefinitions(): Promise<FormDefinition[]> {
-    const response = await this.request<ApiResponse<FormDefinition[]>>('/form-definitions');
-    return response.data;
-  }
-
-  /**
-   * Get a specific form definition by slug
-   */
-  async getFormDefinition(slug: string): Promise<FormDefinition> {
-    const response = await this.request<ApiResponse<FormDefinition>>(`/form-definitions/${slug}`);
+  async getForm(slug: string): Promise<FormDefinition> {
+    const response = await this.request<ApiResponse<FormDefinition>>(`/forms/${slug}`);
     return response.data;
   }
 
   /**
    * Submit a form
    */
-  async submitForm(submission: FormSubmission): Promise<{ success: boolean; message?: string }> {
+  async submitForm(slug: string, data: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
     const response = await this.request<ApiResponse<{ success: boolean; message?: string }>>(
-      `/forms/${submission.form_slug}/submit`,
+      `/forms/${slug}/submit`,
       {
         method: 'POST',
-        body: JSON.stringify(submission.data),
+        body: JSON.stringify(data),
       }
     );
     return response.data;
   }
 
   /**
-   * Sync local cms-config.json to the server
+   * Sync local cms-config.json structure to the server
    */
-  async syncConfig(config: Omit<CmsConfig, 'api'>): Promise<{ success: boolean; message?: string }> {
+  async syncStructure(config: Omit<CmsConfig, 'api'>): Promise<{ success: boolean; message?: string }> {
     const response = await this.request<ApiResponse<{ success: boolean; message?: string }>>(
-      '/sync',
+      '/sync-structure',
       {
         method: 'POST',
         body: JSON.stringify(config),

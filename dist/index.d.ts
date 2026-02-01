@@ -34,10 +34,6 @@ interface FormDefinition {
     label: string;
     fields: FieldDefinition[];
 }
-interface FormSubmission {
-    form_slug: string;
-    data: Record<string, unknown>;
-}
 interface ApiResponse<T> {
     data: T;
     message?: string;
@@ -72,32 +68,20 @@ declare class CmsClient {
      */
     getPage(slug: string): Promise<Page>;
     /**
-     * Get all available component definitions
+     * Get a form by its slug
      */
-    getComponentDefinitions(): Promise<ComponentDefinition[]>;
-    /**
-     * Get a specific component definition by slug
-     */
-    getComponentDefinition(slug: string): Promise<ComponentDefinition>;
-    /**
-     * Get all available form definitions
-     */
-    getFormDefinitions(): Promise<FormDefinition[]>;
-    /**
-     * Get a specific form definition by slug
-     */
-    getFormDefinition(slug: string): Promise<FormDefinition>;
+    getForm(slug: string): Promise<FormDefinition>;
     /**
      * Submit a form
      */
-    submitForm(submission: FormSubmission): Promise<{
+    submitForm(slug: string, data: Record<string, unknown>): Promise<{
         success: boolean;
         message?: string;
     }>;
     /**
-     * Sync local cms-config.json to the server
+     * Sync local cms-config.json structure to the server
      */
-    syncConfig(config: Omit<CmsConfig, 'api'>): Promise<{
+    syncStructure(config: Omit<CmsConfig, 'api'>): Promise<{
         success: boolean;
         message?: string;
     }>;
@@ -109,4 +93,4 @@ declare class CmsClient {
  */
 declare function createCmsClient(config?: CmsClientConfig): CmsClient;
 
-export { type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormSubmission, type Page, type PageComponent, createCmsClient };
+export { type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type Page, type PageComponent, createCmsClient };

@@ -33,52 +33,31 @@ var CmsClient = class {
     return response.data;
   }
   /**
-   * Get all available component definitions
+   * Get a form by its slug
    */
-  async getComponentDefinitions() {
-    const response = await this.request("/component-definitions");
-    return response.data;
-  }
-  /**
-   * Get a specific component definition by slug
-   */
-  async getComponentDefinition(slug) {
-    const response = await this.request(`/component-definitions/${slug}`);
-    return response.data;
-  }
-  /**
-   * Get all available form definitions
-   */
-  async getFormDefinitions() {
-    const response = await this.request("/form-definitions");
-    return response.data;
-  }
-  /**
-   * Get a specific form definition by slug
-   */
-  async getFormDefinition(slug) {
-    const response = await this.request(`/form-definitions/${slug}`);
+  async getForm(slug) {
+    const response = await this.request(`/forms/${slug}`);
     return response.data;
   }
   /**
    * Submit a form
    */
-  async submitForm(submission) {
+  async submitForm(slug, data) {
     const response = await this.request(
-      `/forms/${submission.form_slug}/submit`,
+      `/forms/${slug}/submit`,
       {
         method: "POST",
-        body: JSON.stringify(submission.data)
+        body: JSON.stringify(data)
       }
     );
     return response.data;
   }
   /**
-   * Sync local cms-config.json to the server
+   * Sync local cms-config.json structure to the server
    */
-  async syncConfig(config) {
+  async syncStructure(config) {
     const response = await this.request(
-      "/sync",
+      "/sync-structure",
       {
         method: "POST",
         body: JSON.stringify(config)

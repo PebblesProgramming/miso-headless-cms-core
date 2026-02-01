@@ -91,7 +91,7 @@ async function sync() {
     process.exit(1);
   }
   const baseUrl = config.api.baseUrl.replace(/\/$/, "");
-  const syncUrl = `${baseUrl}/sync`;
+  const syncUrl = `${baseUrl}/sync-structure`;
   console.log(`Syncing to ${syncUrl}...`);
   try {
     const response = await fetch(syncUrl, {

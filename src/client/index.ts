@@ -6,7 +6,6 @@ export type {
   PageComponent,
   Page,
   FormDefinition,
-  FormSubmission,
   ApiResponse,
   CmsClientConfig,
   CmsConfig,
