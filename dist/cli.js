@@ -98,7 +98,7 @@ async function sync() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${config.api.apiKey}`,
+        "X-API-Key": config.api.apiKey,
         "Accept": "application/json"
       },
       body: JSON.stringify({
