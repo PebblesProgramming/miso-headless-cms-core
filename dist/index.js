@@ -1,6 +1,4 @@
 // src/client/client.ts
-import fs from "fs";
-import path from "path";
 var CmsClient = class {
   baseUrl;
   apiKey;
@@ -66,23 +64,14 @@ function createCmsClient(config) {
   if (config) {
     return new CmsClient(config);
   }
-  const configPath = path.join(process.cwd(), "cms-config.json");
-  if (!fs.existsSync(configPath)) {
+  const baseUrl = process.env.CMS_API_URL || process.env.NEXT_PUBLIC_CMS_API_URL;
+  const apiKey = process.env.CMS_API_KEY || process.env.NEXT_PUBLIC_CMS_API_KEY;
+  if (!baseUrl || !apiKey) {
     throw new Error(
-      'cms-config.json not found. Run "npx cms init" to create one, or pass config directly to createCmsClient().'
+      "CMS config not found. Either pass config to createCmsClient() or set environment variables: CMS_API_URL and CMS_API_KEY (or NEXT_PUBLIC_ prefixed versions)."
     );
   }
-  const fileContent = fs.readFileSync(configPath, "utf-8");
-  const cmsConfig = JSON.parse(fileContent);
-  if (!cmsConfig.api?.baseUrl || !cmsConfig.api?.apiKey) {
-    throw new Error(
-      "cms-config.json is missing api.baseUrl or api.apiKey. Please configure these values."
-    );
-  }
-  return new CmsClient({
-    baseUrl: cmsConfig.api.baseUrl,
-    apiKey: cmsConfig.api.apiKey
-  });
+  return new CmsClient({ baseUrl, apiKey });
 }
 export {
   CmsClient,

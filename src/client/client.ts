@@ -1,14 +1,9 @@
 import type {
   CmsClientConfig,
   CmsConfig,
-  ComponentDefinition,
   FormDefinition,
-  FormSubmission,
   Page,
-  ApiResponse,
 } from './types.js';
-import fs from 'fs';
-import path from 'path';
 
 export class CmsClient {
   private baseUrl: string;
@@ -87,33 +82,24 @@ export class CmsClient {
 /**
  * Create a CMS client instance
  *
- * @param config - Optional config. If not provided, reads from cms-config.json
+ * @param config - Optional config. If not provided, reads from environment variables:
+ *                 - CMS_API_URL (or NEXT_PUBLIC_CMS_API_URL)
+ *                 - CMS_API_KEY (or NEXT_PUBLIC_CMS_API_KEY)
  */
 export function createCmsClient(config?: CmsClientConfig): CmsClient {
   if (config) {
     return new CmsClient(config);
   }
 
-  // Try to read from cms-config.json in project root
-  const configPath = path.join(process.cwd(), 'cms-config.json');
+  // Try environment variables
+  const baseUrl = process.env.CMS_API_URL || process.env.NEXT_PUBLIC_CMS_API_URL;
+  const apiKey = process.env.CMS_API_KEY || process.env.NEXT_PUBLIC_CMS_API_KEY;
 
-  if (!fs.existsSync(configPath)) {
+  if (!baseUrl || !apiKey) {
     throw new Error(
-      'cms-config.json not found. Run "npx cms init" to create one, or pass config directly to createCmsClient().'
+      'CMS config not found. Either pass config to createCmsClient() or set environment variables: CMS_API_URL and CMS_API_KEY (or NEXT_PUBLIC_ prefixed versions).'
     );
   }
 
-  const fileContent = fs.readFileSync(configPath, 'utf-8');
-  const cmsConfig: CmsConfig = JSON.parse(fileContent);
-
-  if (!cmsConfig.api?.baseUrl || !cmsConfig.api?.apiKey) {
-    throw new Error(
-      'cms-config.json is missing api.baseUrl or api.apiKey. Please configure these values.'
-    );
-  }
-
-  return new CmsClient({
-    baseUrl: cmsConfig.api.baseUrl,
-    apiKey: cmsConfig.api.apiKey,
-  });
+  return new CmsClient({ baseUrl, apiKey });
 }

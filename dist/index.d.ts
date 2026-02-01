@@ -89,7 +89,9 @@ declare class CmsClient {
 /**
  * Create a CMS client instance
  *
- * @param config - Optional config. If not provided, reads from cms-config.json
+ * @param config - Optional config. If not provided, reads from environment variables:
+ *                 - CMS_API_URL (or NEXT_PUBLIC_CMS_API_URL)
+ *                 - CMS_API_KEY (or NEXT_PUBLIC_CMS_API_KEY)
  */
 declare function createCmsClient(config?: CmsClientConfig): CmsClient;
 
