@@ -12,6 +12,15 @@ npm install @miso-software/headless-cms-core
 
 Initialize a config file in your project:
 
+```Option A: SSH (if you have SSH keys set up)
+  npm install git+ssh://git@github.com/PebblesProgramming/miso-headless-cms-core.git
+```
+
+```Option B: HTTPS with Personal Access Token
+  npm install git+https://github.com/PebblesProgramming/miso-headless-cms-core.git
+  (This will prompt for credentials, or you can use a token)
+```
+
 ```bash
 npx cms init
 ```
@@ -38,31 +47,35 @@ npx cms sync
 ## Client Usage
 
 ```typescript
-import { createCmsClient } from '@miso-software/headless-cms-core';
+import { createCmsClient } from "@miso-software/headless-cms-core";
 
 const cms = createCmsClient();
 
 // Get a page with all its components
-const page = await cms.getPage('home');
+const page = await cms.getPage("home");
 
 // Get a form
-const form = await cms.getForm('contact');
+const form = await cms.getForm("contact");
 
 // Submit a form
-await cms.submitForm('contact', {
-  name: 'John',
-  email: 'john@example.com',
-  message: 'Hello!'
+await cms.submitForm("contact", {
+  name: "John",
+  email: "john@example.com",
+  message: "Hello!",
 });
 ```
 
 ## React Components
 
 ```tsx
-import { CmsBlock, CmsPage, registerBlockRenderer } from '@miso-software/headless-cms-core/ui';
+import {
+  CmsBlock,
+  CmsPage,
+  registerBlockRenderer,
+} from "@miso-software/headless-cms-core/ui";
 
 // Register how each component type should render
-registerBlockRenderer('hero_section', ({ content, className }) => (
+registerBlockRenderer("hero_section", ({ content, className }) => (
   <section className={className}>
     <h1>{content.title as string}</h1>
     <p>{content.subtitle as string}</p>
@@ -73,18 +86,18 @@ registerBlockRenderer('hero_section', ({ content, className }) => (
 <CmsBlock
   slug="hero_section"
   id={1}
-  content={{ title: 'Hello', subtitle: 'World' }}
-/>
+  content={{ title: "Hello", subtitle: "World" }}
+/>;
 
 // Or render an entire page
-const page = await cms.getPage('home');
-<CmsPage components={page.components} />
+const page = await cms.getPage("home");
+<CmsPage components={page.components} />;
 ```
 
 ## CLI Commands
 
-| Command | Description |
-|---------|-------------|
-| `npx cms init` | Create `cms-config.json` |
+| Command        | Description               |
+| -------------- | ------------------------- |
+| `npx cms init` | Create `cms-config.json`  |
 | `npx cms sync` | Sync config to CMS server |
-| `npx cms help` | Show help |
+| `npx cms help` | Show help                 |
