@@ -28,11 +28,36 @@ interface Page {
     allowed_blocks: string[];
     components: PageComponent[];
 }
+type FormFieldType = 'text' | 'email' | 'phone' | 'textarea' | 'number' | 'select' | 'checkbox' | 'radio' | 'date';
+interface FormFieldOption {
+    value: string;
+    label: string;
+}
+interface FormFieldValidation {
+    required?: boolean;
+    min?: number;
+    max?: number;
+    regex?: string;
+}
+interface FormFieldDefinition {
+    name: string;
+    type: FormFieldType;
+    label: string;
+    placeholder?: string;
+    options?: FormFieldOption[];
+    validation?: FormFieldValidation;
+}
+interface FormSubmitResponse {
+    success: boolean;
+    message: string;
+    submission_id: number;
+}
 interface FormDefinition {
     id: number;
+    name: string;
     slug: string;
-    label: string;
-    fields: FieldDefinition[];
+    fields: FormFieldDefinition[];
+    success_message: string;
 }
 interface ApiResponse<T> {
     data: T;
@@ -74,10 +99,7 @@ declare class CmsClient {
     /**
      * Submit a form
      */
-    submitForm(slug: string, data: Record<string, unknown>): Promise<{
-        success: boolean;
-        message?: string;
-    }>;
+    submitForm(slug: string, data: Record<string, unknown>): Promise<FormSubmitResponse>;
     /**
      * Sync local cms-config.json structure to the server
      */
@@ -95,4 +117,4 @@ declare class CmsClient {
  */
 declare function createCmsClient(config?: CmsClientConfig): CmsClient;
 
-export { type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type Page, type PageComponent, createCmsClient };
+export { type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type Page, type PageComponent, createCmsClient };

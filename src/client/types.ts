@@ -38,12 +38,43 @@ export interface Page {
   components: PageComponent[];
 }
 
+// Form field types supported by forms
+export type FormFieldType = 'text' | 'email' | 'phone' | 'textarea' | 'number' | 'select' | 'checkbox' | 'radio' | 'date';
+
+export interface FormFieldOption {
+  value: string;
+  label: string;
+}
+
+export interface FormFieldValidation {
+  required?: boolean;
+  min?: number;
+  max?: number;
+  regex?: string;
+}
+
+export interface FormFieldDefinition {
+  name: string;
+  type: FormFieldType;
+  label: string;
+  placeholder?: string;
+  options?: FormFieldOption[];
+  validation?: FormFieldValidation;
+}
+
+export interface FormSubmitResponse {
+  success: boolean;
+  message: string;
+  submission_id: number;
+}
+
 // Form definition from the CMS
 export interface FormDefinition {
   id: number;
+  name: string;
   slug: string;
-  label: string;
-  fields: FieldDefinition[];
+  fields: FormFieldDefinition[];
+  success_message: string;
 }
 
 // Form submission payload

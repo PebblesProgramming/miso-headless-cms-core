@@ -1,5 +1,6 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import React, { CSSProperties, ReactNode } from 'react';
+import { CmsClient, FormDefinition, FormFieldDefinition, FormSubmitResponse } from './index.js';
 
 interface CmsBlockProps {
     slug: string;
@@ -93,6 +94,42 @@ interface MediaFieldProps {
     className?: string;
     alt?: string;
 }
+type FormErrors = Record<string, string>;
+interface FormFieldRenderProps {
+    field: FormFieldDefinition;
+    value: string | boolean;
+    onChange: (value: string | boolean) => void;
+    error?: string;
+    inputClassName?: string;
+    labelClassName?: string;
+    fieldClassName?: string;
+    errorClassName?: string;
+}
+interface CmsFormProps {
+    slug?: string;
+    client?: CmsClient;
+    form?: FormDefinition;
+    className?: string;
+    fieldClassName?: string;
+    labelClassName?: string;
+    inputClassName?: string;
+    errorClassName?: string;
+    buttonClassName?: string;
+    successClassName?: string;
+    errorContainerClassName?: string;
+    loadingClassName?: string;
+    submitLabel?: string;
+    submittingLabel?: string;
+    loadingContent?: ReactNode;
+    successContent?: ReactNode;
+    errorContent?: ReactNode;
+    renderField?: (props: FormFieldRenderProps) => ReactNode;
+    onSuccess?: (response: FormSubmitResponse) => void;
+    onError?: (error: Error) => void;
+    onLoadError?: (error: Error) => void;
+    resetOnSuccess?: boolean;
+    children?: ReactNode;
+}
 
 /**
  * Renders a text field value.
@@ -112,4 +149,16 @@ declare function RichTextField({ value, className }: RichTextFieldProps): react_
  */
 declare function MediaField({ value, className, alt }: MediaFieldProps): react_jsx_runtime.JSX.Element | null;
 
-export { CmsBlock, type CmsBlockProps, CmsPage, type CmsPageProps, MediaField, type MediaFieldProps, type PageComponentData, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, registerBlockRenderer, unregisterBlockRenderer };
+declare function CmsForm({ slug, client, form: formProp, className, fieldClassName, labelClassName, inputClassName, errorClassName, buttonClassName, successClassName, errorContainerClassName, loadingClassName, submitLabel, submittingLabel, loadingContent, successContent, errorContent, renderField, onSuccess, onError, onLoadError, resetOnSuccess, children, }: CmsFormProps): react_jsx_runtime.JSX.Element | null;
+
+declare function DefaultFormField({ field, value, onChange, error, inputClassName, labelClassName, fieldClassName, errorClassName, }: FormFieldRenderProps): react_jsx_runtime.JSX.Element;
+
+/**
+ * Validate form data against field definitions.
+ * Mirrors the CMS backend's FormDefinition::buildValidationRules().
+ *
+ * @returns Record of field name to error message. Empty object means valid.
+ */
+declare function validateFormData(fields: FormFieldDefinition[], data: Record<string, string | boolean>): Record<string, string>;
+
+export { CmsBlock, type CmsBlockProps, CmsForm, type CmsFormProps, CmsPage, type CmsPageProps, DefaultFormField, type FormErrors, type FormFieldRenderProps, MediaField, type MediaFieldProps, type PageComponentData, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, registerBlockRenderer, unregisterBlockRenderer, validateFormData };

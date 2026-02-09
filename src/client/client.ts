@@ -2,6 +2,7 @@ import type {
   CmsClientConfig,
   CmsConfig,
   FormDefinition,
+  FormSubmitResponse,
   Page,
 } from './types.js';
 
@@ -55,8 +56,8 @@ export class CmsClient {
   /**
    * Submit a form
    */
-  async submitForm(slug: string, data: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
-    return this.request<{ success: boolean; message?: string }>(
+  async submitForm(slug: string, data: Record<string, unknown>): Promise<FormSubmitResponse> {
+    return this.request<FormSubmitResponse>(
       `/forms/${slug}/submit`,
       {
         method: 'POST',
