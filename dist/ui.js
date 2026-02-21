@@ -98,10 +98,25 @@ function RichTextField({ value, className }) {
 
 // src/ui/fields/MediaField.tsx
 import { jsx as jsx5 } from "react/jsx-runtime";
+var VIDEO_EXTENSIONS = [".mp4", ".webm", ".ogg", ".mov"];
+function isVideoUrl(url) {
+  const lower = url.toLowerCase();
+  return VIDEO_EXTENSIONS.some((ext) => lower.includes(ext));
+}
 function MediaField({ value, className, alt = "" }) {
   if (!value) return null;
   const src = typeof value === "string" ? value : value.url;
   const imgAlt = typeof value === "string" ? alt : value.alt || alt;
+  if (isVideoUrl(src)) {
+    return /* @__PURE__ */ jsx5(
+      "video",
+      {
+        src,
+        controls: true,
+        className
+      }
+    );
+  }
   return /* @__PURE__ */ jsx5(
     "img",
     {

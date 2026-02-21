@@ -144,8 +144,9 @@ declare function TextField({ value, className, as: Element, }: TextFieldProps): 
 declare function RichTextField({ value, className }: RichTextFieldProps): react_jsx_runtime.JSX.Element | null;
 
 /**
- * Renders a media field (image).
+ * Renders a media field (image or video).
  * Handles both string URLs and object format with url/alt.
+ * Automatically detects video files by extension and renders a <video> element.
  */
 declare function MediaField({ value, className, alt }: MediaFieldProps): react_jsx_runtime.JSX.Element | null;
 
