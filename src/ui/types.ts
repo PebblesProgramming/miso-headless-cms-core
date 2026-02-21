@@ -1,6 +1,10 @@
-import type { ReactNode, CSSProperties } from 'react';
-import type { FormFieldDefinition, FormDefinition, FormSubmitResponse } from '../client/types.js';
-import type { CmsClient } from '../client/client.js';
+import type { ReactNode, CSSProperties } from "react";
+import type {
+  FormFieldDefinition,
+  FormDefinition,
+  FormSubmitResponse,
+} from "../client/types.js";
+import type { CmsClient } from "../client/client.js";
 
 // Base props for all CMS components
 export interface CmsComponentProps {
@@ -15,7 +19,7 @@ export interface CmsComponentProps {
 export interface TextFieldProps {
   value: string;
   className?: string;
-  as?: 'p' | 'span' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'div';
+  as?: "p" | "span" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "div";
 }
 
 export interface RichTextFieldProps {
@@ -27,6 +31,7 @@ export interface MediaFieldProps {
   value: string | { url: string; alt?: string };
   className?: string;
   alt?: string;
+  autoPlay?: boolean;
 }
 
 // Generic block renderer props
@@ -41,7 +46,10 @@ export interface CmsBlockProps {
 }
 
 // Component registry type
-export type ComponentRegistry = Map<string, React.ComponentType<CmsComponentProps>>;
+export type ComponentRegistry = Map<
+  string,
+  React.ComponentType<CmsComponentProps>
+>;
 
 // Form types
 export type FormErrors = Record<string, string>;

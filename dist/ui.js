@@ -103,7 +103,7 @@ function isVideoUrl(url) {
   const lower = url.toLowerCase();
   return VIDEO_EXTENSIONS.some((ext) => lower.includes(ext));
 }
-function MediaField({ value, className, alt = "" }) {
+function MediaField({ value, className, alt = "", autoPlay = false }) {
   if (!value) return null;
   let src;
   let imgAlt;
@@ -123,7 +123,11 @@ function MediaField({ value, className, alt = "" }) {
       "video",
       {
         src,
-        controls: true,
+        controls: !autoPlay,
+        autoPlay,
+        muted: autoPlay,
+        loop: autoPlay,
+        playsInline: true,
         className
       }
     );

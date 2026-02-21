@@ -80,7 +80,7 @@ declare function CmsPage({ components, className, style, blockClassNames, }: Cms
 interface TextFieldProps {
     value: string;
     className?: string;
-    as?: 'p' | 'span' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'div';
+    as?: "p" | "span" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "div";
 }
 interface RichTextFieldProps {
     value: string;
@@ -93,6 +93,7 @@ interface MediaFieldProps {
     };
     className?: string;
     alt?: string;
+    autoPlay?: boolean;
 }
 type FormErrors = Record<string, string>;
 interface FormFieldRenderProps {
@@ -148,7 +149,7 @@ declare function RichTextField({ value, className }: RichTextFieldProps): react_
  * Handles both string URLs and object format with url/alt.
  * Automatically detects video files by extension and renders a <video> element.
  */
-declare function MediaField({ value, className, alt }: MediaFieldProps): react_jsx_runtime.JSX.Element | null;
+declare function MediaField({ value, className, alt, autoPlay }: MediaFieldProps): react_jsx_runtime.JSX.Element | null;
 
 declare function CmsForm({ slug, client, form: formProp, className, fieldClassName, labelClassName, inputClassName, errorClassName, buttonClassName, successClassName, errorContainerClassName, loadingClassName, submitLabel, submittingLabel, loadingContent, successContent, errorContent, renderField, onSuccess, onError, onLoadError, resetOnSuccess, children, }: CmsFormProps): react_jsx_runtime.JSX.Element | null;
 

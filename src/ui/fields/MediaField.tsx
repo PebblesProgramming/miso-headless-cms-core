@@ -13,7 +13,7 @@ function isVideoUrl(url: string): boolean {
  * Handles both string URLs and object format with url/alt.
  * Automatically detects video files by extension and renders a <video> element.
  */
-export function MediaField({ value, className, alt = '' }: MediaFieldProps) {
+export function MediaField({ value, className, alt = '', autoPlay = false }: MediaFieldProps) {
   if (!value) return null;
 
   let src: string;
@@ -37,7 +37,11 @@ export function MediaField({ value, className, alt = '' }: MediaFieldProps) {
     return (
       <video
         src={src}
-        controls
+        controls={!autoPlay}
+        autoPlay={autoPlay}
+        muted={autoPlay}
+        loop={autoPlay}
+        playsInline
         className={className}
       />
     );
