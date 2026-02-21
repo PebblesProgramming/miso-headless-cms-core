@@ -16,8 +16,22 @@ function isVideoUrl(url: string): boolean {
 export function MediaField({ value, className, alt = '' }: MediaFieldProps) {
   if (!value) return null;
 
-  const src = typeof value === 'string' ? value : value.url;
-  const imgAlt = typeof value === 'string' ? alt : (value.alt || alt);
+  let src: string;
+  let imgAlt: string;
+
+  if (typeof value === 'string') {
+    src = value;
+    imgAlt = alt;
+  } else if (value && typeof value === 'object') {
+    // Handle { url, alt } or any object with a url-like property
+    const obj = value as Record<string, unknown>;
+    src = (obj.url as string) || (obj.src as string) || (obj.path as string) || '';
+    imgAlt = (obj.alt as string) || alt;
+  } else {
+    return null;
+  }
+
+  if (!src) return null;
 
   if (isVideoUrl(src)) {
     return (

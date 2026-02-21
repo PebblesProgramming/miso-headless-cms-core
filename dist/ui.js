@@ -105,8 +105,19 @@ function isVideoUrl(url) {
 }
 function MediaField({ value, className, alt = "" }) {
   if (!value) return null;
-  const src = typeof value === "string" ? value : value.url;
-  const imgAlt = typeof value === "string" ? alt : value.alt || alt;
+  let src;
+  let imgAlt;
+  if (typeof value === "string") {
+    src = value;
+    imgAlt = alt;
+  } else if (value && typeof value === "object") {
+    const obj = value;
+    src = obj.url || obj.src || obj.path || "";
+    imgAlt = obj.alt || alt;
+  } else {
+    return null;
+  }
+  if (!src) return null;
   if (isVideoUrl(src)) {
     return /* @__PURE__ */ jsx5(
       "video",
