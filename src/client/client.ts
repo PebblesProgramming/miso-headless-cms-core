@@ -1,4 +1,7 @@
 import type {
+  AgendaEvent,
+  AgendaEventsParams,
+  AgendaEventsResponse,
   CmsClientConfig,
   CmsConfig,
   FormDefinition,
@@ -64,6 +67,40 @@ export class CmsClient {
         body: JSON.stringify(data),
       }
     );
+  }
+
+  /**
+   * Get a paginated list of agenda events for the tenant.
+   * By default returns published events ordered by start_at ascending.
+   *
+   * @example
+   * // All published events
+   * const result = await client.getAgendaEvents();
+   *
+   * // Upcoming events in a specific category
+   * const result = await client.getAgendaEvents({ upcoming: true, category: 'workshop' });
+   *
+   * result.data.forEach(event => console.log(event.title, event.start_at));
+   */
+  async getAgendaEvents(params: AgendaEventsParams = {}): Promise<AgendaEventsResponse> {
+    const query = new URLSearchParams();
+    if (params.status) query.set('status', params.status);
+    if (params.upcoming) query.set('upcoming', '1');
+    if (params.category) query.set('category', params.category);
+    if (params.limit !== undefined) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<AgendaEventsResponse>(`/agenda${qs ? `?${qs}` : ''}`);
+  }
+
+  /**
+   * Get a single agenda event by its slug.
+   *
+   * @example
+   * const event = await client.getAgendaEvent('open-dag-2026');
+   * console.log(event.title, event.start_at, event.location);
+   */
+  async getAgendaEvent(slug: string): Promise<AgendaEvent> {
+    return this.request<AgendaEvent>(`/agenda/${slug}`);
   }
 
   /**

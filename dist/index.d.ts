@@ -67,6 +67,56 @@ interface CmsClientConfig {
     baseUrl: string;
     apiKey: string;
 }
+type AgendaEventStatus = 'draft' | 'published' | 'cancelled';
+interface AgendaEvent {
+    id: number;
+    tenant_id: number;
+    created_by: number;
+    title: string;
+    slug: string;
+    description: string | null;
+    location: string | null;
+    /** ISO 8601 datetime string */
+    start_at: string;
+    /** ISO 8601 datetime string, or null if open-ended */
+    end_at: string | null;
+    all_day: boolean;
+    status: AgendaEventStatus;
+    /** Hex color string e.g. "#3b82f6", or null */
+    color: string | null;
+    category: string | null;
+    max_attendees: number | null;
+    registration_url: string | null;
+    featured_image: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    updated_at: string;
+}
+interface AgendaEventsParams {
+    status?: AgendaEventStatus;
+    /** Only return events where start_at >= now */
+    upcoming?: boolean;
+    category?: string;
+    /** Number of results per page (max 100, default 20) */
+    limit?: number;
+}
+interface AgendaEventsResponse {
+    data: AgendaEvent[];
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
+    meta: {
+        current_page: number;
+        from: number | null;
+        last_page: number;
+        per_page: number;
+        to: number | null;
+        total: number;
+    };
+}
 interface CmsConfig {
     api: {
         baseUrl: string;
@@ -101,6 +151,28 @@ declare class CmsClient {
      */
     submitForm(slug: string, data: Record<string, unknown>): Promise<FormSubmitResponse>;
     /**
+     * Get a paginated list of agenda events for the tenant.
+     * By default returns published events ordered by start_at ascending.
+     *
+     * @example
+     * // All published events
+     * const result = await client.getAgendaEvents();
+     *
+     * // Upcoming events in a specific category
+     * const result = await client.getAgendaEvents({ upcoming: true, category: 'workshop' });
+     *
+     * result.data.forEach(event => console.log(event.title, event.start_at));
+     */
+    getAgendaEvents(params?: AgendaEventsParams): Promise<AgendaEventsResponse>;
+    /**
+     * Get a single agenda event by its slug.
+     *
+     * @example
+     * const event = await client.getAgendaEvent('open-dag-2026');
+     * console.log(event.title, event.start_at, event.location);
+     */
+    getAgendaEvent(slug: string): Promise<AgendaEvent>;
+    /**
      * Sync local cms-config.json structure to the server
      */
     syncStructure(config: Omit<CmsConfig, 'api'>): Promise<{
@@ -117,4 +189,4 @@ declare class CmsClient {
  */
 declare function createCmsClient(config?: CmsClientConfig): CmsClient;
 
-export { type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type Page, type PageComponent, createCmsClient };
+export { type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type Page, type PageComponent, createCmsClient };

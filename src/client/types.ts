@@ -95,6 +95,64 @@ export interface CmsClientConfig {
   apiKey: string;
 }
 
+// Agenda event status
+export type AgendaEventStatus = 'draft' | 'published' | 'cancelled';
+
+// A single agenda event as returned by the API
+export interface AgendaEvent {
+  id: number;
+  tenant_id: number;
+  created_by: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  location: string | null;
+  /** ISO 8601 datetime string */
+  start_at: string;
+  /** ISO 8601 datetime string, or null if open-ended */
+  end_at: string | null;
+  all_day: boolean;
+  status: AgendaEventStatus;
+  /** Hex color string e.g. "#3b82f6", or null */
+  color: string | null;
+  category: string | null;
+  max_attendees: number | null;
+  registration_url: string | null;
+  featured_image: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Query parameters for listing agenda events
+export interface AgendaEventsParams {
+  status?: AgendaEventStatus;
+  /** Only return events where start_at >= now */
+  upcoming?: boolean;
+  category?: string;
+  /** Number of results per page (max 100, default 20) */
+  limit?: number;
+}
+
+// Paginated agenda events response (Laravel paginator shape)
+export interface AgendaEventsResponse {
+  data: AgendaEvent[];
+  links: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+  };
+}
+
 // Config file structure (cms-config.json)
 export interface CmsConfig {
   api: {

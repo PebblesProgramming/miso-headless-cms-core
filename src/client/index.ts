@@ -14,4 +14,8 @@ export type {
   ApiResponse,
   CmsClientConfig,
   CmsConfig,
+  AgendaEventStatus,
+  AgendaEvent,
+  AgendaEventsParams,
+  AgendaEventsResponse,
 } from './types.js';
