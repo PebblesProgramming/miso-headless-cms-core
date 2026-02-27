@@ -25,6 +25,8 @@ export interface TextFieldProps {
 export interface RichTextFieldProps {
   value: string;
   className?: string;
+  /** Apply Tailwind Typography `prose` class for styled rich text rendering */
+  prose?: boolean;
 }
 
 export interface MediaFieldProps {

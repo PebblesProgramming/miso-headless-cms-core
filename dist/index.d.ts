@@ -67,6 +67,42 @@ interface CmsClientConfig {
     baseUrl: string;
     apiKey: string;
 }
+interface Post {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string | null;
+    /** HTML string produced by the rich text editor */
+    content: string;
+    featured_image: string | null;
+    /** ISO 8601 datetime string */
+    published_at: string;
+    author: {
+        id: number;
+        name: string;
+    } | null;
+}
+interface PostsParams {
+    limit?: number;
+    page?: number;
+}
+interface PostsResponse {
+    data: Post[];
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
+    meta: {
+        current_page: number;
+        from: number | null;
+        last_page: number;
+        per_page: number;
+        to: number | null;
+        total: number;
+    };
+}
 type AgendaEventStatus = 'draft' | 'published' | 'cancelled';
 interface AgendaEvent {
     id: number;
@@ -143,6 +179,25 @@ declare class CmsClient {
      */
     getPage(slug: string): Promise<Page>;
     /**
+     * Get a paginated list of published posts for the tenant, sorted by published_at descending.
+     *
+     * @example
+     * const result = await client.getPosts({ limit: 5 });
+     * result.data.forEach(post => console.log(post.title, post.published_at));
+     *
+     * // Next page
+     * const page2 = await client.getPosts({ limit: 5, page: 2 });
+     */
+    getPosts(params?: PostsParams): Promise<PostsResponse>;
+    /**
+     * Get a single published post by its slug.
+     *
+     * @example
+     * const post = await client.getPost('my-first-blog-post');
+     * console.log(post.title, post.content); // content is HTML
+     */
+    getPost(slug: string): Promise<Post>;
+    /**
      * Get a form by its slug
      */
     getForm(slug: string): Promise<FormDefinition>;
@@ -189,4 +244,4 @@ declare class CmsClient {
  */
 declare function createCmsClient(config?: CmsClientConfig): CmsClient;
 
-export { type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type Page, type PageComponent, createCmsClient };
+export { type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type Page, type PageComponent, type Post, type PostsParams, type PostsResponse, createCmsClient };

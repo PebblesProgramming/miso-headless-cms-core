@@ -24,4 +24,7 @@ export type {
   AgendaEvent,
   AgendaEventsParams,
   AgendaEventsResponse,
+  Post,
+  PostsParams,
+  PostsResponse,
 } from './client/index.js';

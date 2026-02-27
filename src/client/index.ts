@@ -18,4 +18,7 @@ export type {
   AgendaEvent,
   AgendaEventsParams,
   AgendaEventsResponse,
+  Post,
+  PostsParams,
+  PostsResponse,
 } from './types.js';

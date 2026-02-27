@@ -30,6 +30,33 @@ var CmsClient = class {
     return this.request(`/pages/${slug}`);
   }
   /**
+   * Get a paginated list of published posts for the tenant, sorted by published_at descending.
+   *
+   * @example
+   * const result = await client.getPosts({ limit: 5 });
+   * result.data.forEach(post => console.log(post.title, post.published_at));
+   *
+   * // Next page
+   * const page2 = await client.getPosts({ limit: 5, page: 2 });
+   */
+  async getPosts(params = {}) {
+    const query = new URLSearchParams();
+    if (params.limit !== void 0) query.set("limit", String(params.limit));
+    if (params.page !== void 0) query.set("page", String(params.page));
+    const qs = query.toString();
+    return this.request(`/posts${qs ? `?${qs}` : ""}`);
+  }
+  /**
+   * Get a single published post by its slug.
+   *
+   * @example
+   * const post = await client.getPost('my-first-blog-post');
+   * console.log(post.title, post.content); // content is HTML
+   */
+  async getPost(slug) {
+    return this.request(`/posts/${slug}`);
+  }
+  /**
    * Get a form by its slug
    */
   async getForm(slug) {

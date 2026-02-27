@@ -95,6 +95,45 @@ export interface CmsClientConfig {
   apiKey: string;
 }
 
+// Blog post as returned by the API
+export interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  /** HTML string produced by the rich text editor */
+  content: string;
+  featured_image: string | null;
+  /** ISO 8601 datetime string */
+  published_at: string;
+  author: { id: number; name: string } | null;
+}
+
+// Query parameters for listing posts
+export interface PostsParams {
+  limit?: number;
+  page?: number;
+}
+
+// Paginated posts response (Laravel paginator shape)
+export interface PostsResponse {
+  data: Post[];
+  links: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+  };
+}
+
 // Agenda event status
 export type AgendaEventStatus = 'draft' | 'published' | 'cancelled';
 

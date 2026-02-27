@@ -85,12 +85,13 @@ function TextField({
 
 // src/ui/fields/RichTextField.tsx
 import { jsx as jsx4 } from "react/jsx-runtime";
-function RichTextField({ value, className }) {
+function RichTextField({ value, className, prose = false }) {
   if (!value) return null;
+  const classes = [prose ? "prose" : "", className].filter(Boolean).join(" ") || void 0;
   return /* @__PURE__ */ jsx4(
     "div",
     {
-      className,
+      className: classes,
       dangerouslySetInnerHTML: { __html: value }
     }
   );

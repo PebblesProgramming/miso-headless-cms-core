@@ -7,6 +7,9 @@ import type {
   FormDefinition,
   FormSubmitResponse,
   Page,
+  Post,
+  PostsParams,
+  PostsResponse,
 } from './types.js';
 
 export class CmsClient {
@@ -47,6 +50,35 @@ export class CmsClient {
    */
   async getPage(slug: string): Promise<Page> {
     return this.request<Page>(`/pages/${slug}`);
+  }
+
+  /**
+   * Get a paginated list of published posts for the tenant, sorted by published_at descending.
+   *
+   * @example
+   * const result = await client.getPosts({ limit: 5 });
+   * result.data.forEach(post => console.log(post.title, post.published_at));
+   *
+   * // Next page
+   * const page2 = await client.getPosts({ limit: 5, page: 2 });
+   */
+  async getPosts(params: PostsParams = {}): Promise<PostsResponse> {
+    const query = new URLSearchParams();
+    if (params.limit !== undefined) query.set('limit', String(params.limit));
+    if (params.page !== undefined) query.set('page', String(params.page));
+    const qs = query.toString();
+    return this.request<PostsResponse>(`/posts${qs ? `?${qs}` : ''}`);
+  }
+
+  /**
+   * Get a single published post by its slug.
+   *
+   * @example
+   * const post = await client.getPost('my-first-blog-post');
+   * console.log(post.title, post.content); // content is HTML
+   */
+  async getPost(slug: string): Promise<Post> {
+    return this.request<Post>(`/posts/${slug}`);
   }
 
   /**
