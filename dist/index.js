@@ -27,7 +27,7 @@ var CmsClient = class {
    * Get a page by its slug, including all its components with content
    */
   async getPage(slug) {
-    return this.request(`/pages/${slug}`);
+    return this.request(`/v1/pages/${slug}`);
   }
   /**
    * Get a paginated list of published posts for the tenant, sorted by published_at descending.
@@ -44,7 +44,7 @@ var CmsClient = class {
     if (params.limit !== void 0) query.set("limit", String(params.limit));
     if (params.page !== void 0) query.set("page", String(params.page));
     const qs = query.toString();
-    return this.request(`/posts${qs ? `?${qs}` : ""}`);
+    return this.request(`/v1/posts${qs ? `?${qs}` : ""}`);
   }
   /**
    * Get a single published post by its slug.
@@ -54,20 +54,20 @@ var CmsClient = class {
    * console.log(post.title, post.content); // content is HTML
    */
   async getPost(slug) {
-    return this.request(`/posts/${slug}`);
+    return this.request(`/v1/posts/${slug}`);
   }
   /**
    * Get a form by its slug
    */
   async getForm(slug) {
-    return this.request(`/forms/${slug}`);
+    return this.request(`/v1/forms/${slug}`);
   }
   /**
    * Submit a form
    */
   async submitForm(slug, data) {
     return this.request(
-      `/forms/${slug}/submit`,
+      `/v1/forms/${slug}/submit`,
       {
         method: "POST",
         body: JSON.stringify(data)
@@ -94,7 +94,7 @@ var CmsClient = class {
     if (params.category) query.set("category", params.category);
     if (params.limit !== void 0) query.set("limit", String(params.limit));
     const qs = query.toString();
-    return this.request(`/agenda${qs ? `?${qs}` : ""}`);
+    return this.request(`/v1/agenda${qs ? `?${qs}` : ""}`);
   }
   /**
    * Get a single agenda event by its slug.
@@ -104,14 +104,14 @@ var CmsClient = class {
    * console.log(event.title, event.start_at, event.location);
    */
   async getAgendaEvent(slug) {
-    return this.request(`/agenda/${slug}`);
+    return this.request(`/v1/agenda/${slug}`);
   }
   /**
    * Sync local cms-config.json structure to the server
    */
   async syncStructure(config) {
     return this.request(
-      "/sync-structure",
+      "/v1/sync-structure",
       {
         method: "POST",
         body: JSON.stringify(config)

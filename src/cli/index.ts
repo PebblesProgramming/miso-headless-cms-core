@@ -113,7 +113,7 @@ async function sync() {
   }
 
   const baseUrl = config.api.baseUrl.replace(/\/$/, '');
-  const syncUrl = `${baseUrl}/sync-structure`;
+  const syncUrl = `${baseUrl}/v1/sync-structure`;
 
   console.log(`Syncing to ${syncUrl}...`);
 

@@ -49,7 +49,7 @@ export class CmsClient {
    * Get a page by its slug, including all its components with content
    */
   async getPage(slug: string): Promise<Page> {
-    return this.request<Page>(`/pages/${slug}`);
+    return this.request<Page>(`/v1/pages/${slug}`);
   }
 
   /**
@@ -67,7 +67,7 @@ export class CmsClient {
     if (params.limit !== undefined) query.set('limit', String(params.limit));
     if (params.page !== undefined) query.set('page', String(params.page));
     const qs = query.toString();
-    return this.request<PostsResponse>(`/posts${qs ? `?${qs}` : ''}`);
+    return this.request<PostsResponse>(`/v1/posts${qs ? `?${qs}` : ''}`);
   }
 
   /**
@@ -78,14 +78,14 @@ export class CmsClient {
    * console.log(post.title, post.content); // content is HTML
    */
   async getPost(slug: string): Promise<Post> {
-    return this.request<Post>(`/posts/${slug}`);
+    return this.request<Post>(`/v1/posts/${slug}`);
   }
 
   /**
    * Get a form by its slug
    */
   async getForm(slug: string): Promise<FormDefinition> {
-    return this.request<FormDefinition>(`/forms/${slug}`);
+    return this.request<FormDefinition>(`/v1/forms/${slug}`);
   }
 
   /**
@@ -93,7 +93,7 @@ export class CmsClient {
    */
   async submitForm(slug: string, data: Record<string, unknown>): Promise<FormSubmitResponse> {
     return this.request<FormSubmitResponse>(
-      `/forms/${slug}/submit`,
+      `/v1/forms/${slug}/submit`,
       {
         method: 'POST',
         body: JSON.stringify(data),
@@ -121,7 +121,7 @@ export class CmsClient {
     if (params.category) query.set('category', params.category);
     if (params.limit !== undefined) query.set('limit', String(params.limit));
     const qs = query.toString();
-    return this.request<AgendaEventsResponse>(`/agenda${qs ? `?${qs}` : ''}`);
+    return this.request<AgendaEventsResponse>(`/v1/agenda${qs ? `?${qs}` : ''}`);
   }
 
   /**
@@ -132,7 +132,7 @@ export class CmsClient {
    * console.log(event.title, event.start_at, event.location);
    */
   async getAgendaEvent(slug: string): Promise<AgendaEvent> {
-    return this.request<AgendaEvent>(`/agenda/${slug}`);
+    return this.request<AgendaEvent>(`/v1/agenda/${slug}`);
   }
 
   /**
@@ -140,7 +140,7 @@ export class CmsClient {
    */
   async syncStructure(config: Omit<CmsConfig, 'api'>): Promise<{ success: boolean; message?: string }> {
     return this.request<{ success: boolean; message?: string }>(
-      '/sync-structure',
+      '/v1/sync-structure',
       {
         method: 'POST',
         body: JSON.stringify(config),

@@ -1,5 +1,15 @@
 // Field types supported by the CMS
-export type FieldType = 'text' | 'textarea' | 'richtext' | 'media' | 'number' | 'boolean' | 'date' | 'select';
+export type FieldType = 'text' | 'textarea' | 'richtext' | 'media' | 'number' | 'boolean' | 'date' | 'select' | 'repeater';
+
+// Sub-field type (same as FieldType but without repeater — no nested repeaters)
+export type SubFieldType = Exclude<FieldType, 'repeater'>;
+
+// Sub-field definition within a repeater field
+export interface SubFieldDefinition {
+  name: string;
+  type: SubFieldType;
+  label: string;
+}
 
 // Field definition within a component
 export interface FieldDefinition {
@@ -8,6 +18,7 @@ export interface FieldDefinition {
   label: string;
   required?: boolean;
   options?: string[]; // For select fields
+  sub_fields?: SubFieldDefinition[]; // Only present when type === 'repeater'
 }
 
 // Component definition from the CMS

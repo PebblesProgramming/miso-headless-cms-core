@@ -1,10 +1,17 @@
-type FieldType = 'text' | 'textarea' | 'richtext' | 'media' | 'number' | 'boolean' | 'date' | 'select';
+type FieldType = 'text' | 'textarea' | 'richtext' | 'media' | 'number' | 'boolean' | 'date' | 'select' | 'repeater';
+type SubFieldType = Exclude<FieldType, 'repeater'>;
+interface SubFieldDefinition {
+    name: string;
+    type: SubFieldType;
+    label: string;
+}
 interface FieldDefinition {
     name: string;
     type: FieldType;
     label: string;
     required?: boolean;
     options?: string[];
+    sub_fields?: SubFieldDefinition[];
 }
 interface ComponentDefinition {
     id: number;
