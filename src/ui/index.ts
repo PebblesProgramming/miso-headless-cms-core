@@ -14,6 +14,7 @@ export {
   TextField,
   RichTextField,
   MediaField,
+  RICH_TEXT_BASE_CSS,
 } from './fields/index.js';
 
 // Forms

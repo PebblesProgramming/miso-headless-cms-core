@@ -79,9 +79,31 @@ interface Post {
     title: string;
     slug: string;
     excerpt: string | null;
-    /** HTML string produced by the rich text editor */
+    /**
+     * HTML string produced by the rich text editor.
+     *
+     * May contain: `<h1>`–`<h3>`, `<p>`, `<ul>`, `<ol>`, `<li>`, `<blockquote>`,
+     * `<hr>`, `<pre><code>` (code block), `<code>` (inline), `<strong>`, `<em>`,
+     * `<u>`, `<s>` (strikethrough), `<sub>`, `<sup>`, `<a>`, `<img>`,
+     * `<span style="color: #hex">` (text colour),
+     * `<mark style="background-color: #hex">` (highlight),
+     * and elements with `style="text-align: center|right|justify"`.
+     * Images may carry `style="width: X%; height: auto;"` when resized in the editor.
+     *
+     * Use `<RichTextField>` from `@miso-software/headless-cms-core/ui` to render.
+     */
     content: string;
     featured_image: string | null;
+    /**
+     * Display name for the author on this post.
+     * Set in the CMS per post — overrides the author's account name when present.
+     * Falls back to `author.name` when null.
+     */
+    author_name: string | null;
+    /** Short bio or description of the author for this post. */
+    author_bio: string | null;
+    /** URL of the author's avatar image for this post. */
+    author_avatar: string | null;
     /** ISO 8601 datetime string */
     published_at: string;
     author: {

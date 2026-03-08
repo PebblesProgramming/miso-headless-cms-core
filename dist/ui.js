@@ -85,6 +85,41 @@ function TextField({
 
 // src/ui/fields/RichTextField.tsx
 import { jsx as jsx4 } from "react/jsx-runtime";
+var RICH_TEXT_BASE_CSS = `
+[data-cms-rich-text] code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875em;
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+}
+[data-cms-rich-text] pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875em;
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 1em 1.25em;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre;
+}
+[data-cms-rich-text] pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  border-radius: 0;
+}
+[data-cms-rich-text] blockquote {
+  border-left: 4px solid rgba(0, 0, 0, 0.15);
+  padding-left: 1em;
+  margin-left: 0;
+  font-style: italic;
+  opacity: 0.8;
+}
+[data-cms-rich-text] img {
+  max-width: 100%;
+  height: auto;
+}
+`.trim();
 function RichTextField({ value, className, prose = false }) {
   if (!value) return null;
   const classes = [prose ? "prose" : "", className].filter(Boolean).join(" ") || void 0;
@@ -92,6 +127,7 @@ function RichTextField({ value, className, prose = false }) {
     "div",
     {
       className: classes,
+      "data-cms-rich-text": "true",
       dangerouslySetInnerHTML: { __html: value }
     }
   );
@@ -561,6 +597,7 @@ export {
   CmsPage,
   DefaultFormField,
   MediaField,
+  RICH_TEXT_BASE_CSS,
   RichTextField,
   TextField,
   registerBlockRenderer,
