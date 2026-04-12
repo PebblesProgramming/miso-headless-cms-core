@@ -28,7 +28,9 @@ var CONFIG_TEMPLATE = `{
     {
       "slug": "home",
       "title": "Homepagina",
-      "allowed_blocks": ["hero_section", "text_area"]
+      "allowed_blocks": ["hero_section", "text_area"],
+      "group": "Marketing",
+      "order": 1
     }
   ]
 }
