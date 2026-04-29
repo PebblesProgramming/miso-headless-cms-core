@@ -30,7 +30,9 @@ const CONFIG_TEMPLATE = `{
     {
       "slug": "home",
       "title": "Homepagina",
-      "allowed_blocks": ["hero_section", "text_area"]
+      "allowed_blocks": ["hero_section", "text_area"],
+      "group": "Marketing",
+      "order": 1
     }
   ]
 }
@@ -76,13 +78,21 @@ async function init() {
   console.log('  4. Run "npx cms sync" to sync with the server');
 }
 
+interface CmsPageConfig {
+  slug: string;
+  title: string;
+  allowed_blocks: string[];
+  order?: number;
+  group?: string;
+}
+
 interface CmsConfig {
   api: {
     baseUrl: string;
     apiKey: string;
   };
   components: Record<string, unknown>;
-  pages: unknown[];
+  pages: CmsPageConfig[];
 }
 
 async function sync() {
