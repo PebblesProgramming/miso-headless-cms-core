@@ -184,6 +184,13 @@ export interface AgendaEvent {
   /** ISO 8601 datetime string, or null if open-ended */
   end_at: string | null;
   all_day: boolean;
+  /**
+   * When true, the event spans one or more whole months.
+   * `start_at` is set to the first day of the start month,
+   * `end_at` is set to the last day of the end month (or the same month when single-month).
+   * Display as "september 2025" or "juni – augustus 2025" rather than specific dates.
+   */
+  whole_month: boolean;
   status: AgendaEventStatus;
   /** Hex color string e.g. "#3b82f6", or null */
   color: string | null;
