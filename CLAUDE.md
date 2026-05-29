@@ -19,34 +19,39 @@ Geen tests. Lint is alleen type-checking.
 
 CLI binary: `cms` via `dist/cli.js` — commando's `cms init` en `cms sync`.
 
-## Architectuur v0.2 (huidig)
+## Huidige architectuur (v0.2)
 
-### `defineBlock` — de primaire API
-
-`defineBlock` is de **enige** manier om een CMS block te definiëren. Het combineert schema en renderer in één aanroep:
+### `defineBlock` — de enige manier om een block te definiëren
 
 ```tsx
+import { defineBlock } from '@miso-software/headless-cms-core/ui';
+
 defineBlock({
   slug: 'hero_section',
   label: 'Hero Sectie',
   fields: [
     { name: 'title', type: 'text', label: 'Titel' },
     { name: 'image', type: 'media', label: 'Afbeelding' },
-  ] as const,
+  ] as const,               // ← as const geeft type inference op content
   render: ({ content }) => (
-    // content.title en content.image zijn getypeerd vanuit de fields definitie
+    // content.title: string
+    // content.image: string | { url: string; alt?: string }
     <section>...</section>
   ),
 });
 ```
 
-Intern doet `defineBlock` twee dingen:
-1. Registreert de renderer in de `rendererRegistry` (voor `CmsBlock` / preview)
-2. Registreert het schema in de `schemaRegistry` (voor `npx cms sync`)
+Intern doet `defineBlock`:
+1. Roept `registerBlockRenderer` aan (registreert renderer in `rendererRegistry` Map)
+2. Slaat schema op in `schemaRegistry` Map (voor CLI sync)
 
-### `CmsPreviewListener` — SDK component
+### `getRegisteredSchemas()`
 
-Niet copy-pasten. Import uit de SDK:
+Geeft alle via `defineBlock` geregistreerde schemas terug als `Record<string, { label, fields }>`. Wordt gebruikt door de CLI via een tsx subprocess.
+
+### `CmsPreviewListener`
+
+Vervangt de copy-paste `PreviewListener.tsx` die elk project had. Luistert naar `miso-preview-update` PostMessages van de CMS admin, rendert via `CmsBlock`.
 
 ```tsx
 import { CmsPreviewListener } from '@miso-software/headless-cms-core/ui';
@@ -64,17 +69,29 @@ import { CmsPreviewListener } from '@miso-software/headless-cms-core/ui';
 
 ### CLI — `cms sync`
 
-Leest `cms-config.json` voor de `pages` array én haalt component schemas op via `getRegisteredSchemas()`. POST naar `/v1/sync-structure`. Draait automatisch via `npm run dev` en `npm run build` in client projects — nooit handmatig.
+Twee modi:
 
-### `cms-config.json` in client projects
+**v0.2 (aanbevolen):**
+```bash
+npx cms sync --blocks ./app/lib/cms-blocks.tsx
+```
+Spawnt een tsx subprocess, importeert het blocks bestand, roept `getRegisteredSchemas()` aan voor de components. Vereist `tsx` als devDependency in het client project.
 
-Bevat alleen nog de `pages` array. Components komen uit `defineBlock` in code:
+**Legacy fallback:**
+```bash
+npx cms sync
+```
+Leest `components` uit `cms-config.json`. Werkt alleen als de `components` sectie aanwezig is.
+
+### `cms-config.json` in client projects (v0.2)
+
+Bevat alleen `api` en `pages` — geen `components` meer:
 
 ```json
 {
   "api": { "baseUrl": "...", "apiKey": "..." },
   "pages": [
-    { "slug": "home", "title": "Home", "allowed_blocks": ["hero_section", "text_area"] }
+    { "slug": "home", "title": "Home", "allowed_blocks": ["hero_section"] }
   ]
 }
 ```
@@ -89,7 +106,7 @@ Bevat alleen nog de `pages` array. Components komen uit `defineBlock` in code:
 | `ui` | `src/ui.ts` | `dist/ui.js` + `.d.ts` |
 | `cli` | `src/cli/index.ts` | `dist/cli.js` |
 
-ESM only. Alleen `dist/` wordt gepubliceerd.
+ESM only. Alleen `dist/` wordt gepubliceerd. Alle source imports gebruiken `.js` extensies (ESM Node resolution) — ook voor `.ts` bestanden.
 
 ## Client (`src/client/`)
 
@@ -108,18 +125,27 @@ ESM only. Alleen `dist/` wordt gepubliceerd.
 
 **Forms:** `CmsForm` kan eigen form ophalen (`slug` + `client`) of pre-fetched form accepteren (`form`). Validatie via `validateFormData()` spiegelt backend regels.
 
-## Key conventions
+## Type inference
 
-- Alle source imports gebruiken `.js` extensies (ESM Node resolution) — ook voor `.ts` bestanden
-- `FieldType` ondersteunt `repeater`; `SubFieldType` sluit `repeater` uit (geen geneste repeaters)
-- `AgendaEvent.whole_month` — toon als maandbereik als `true`
-- `Post.content` is HTML — gebruik `RichTextField` om te renderen
+`defineBlock` leidt content types af uit de `fields` array als die `as const` heeft. Type mapping:
+
+| FieldType | TypeScript type |
+|---|---|
+| `text`, `textarea`, `richtext`, `date`, `select` | `string` |
+| `number` | `number` |
+| `boolean` | `boolean` |
+| `media` | `string \| { url: string; alt?: string }` |
+| `repeater` | `Record<string, unknown>[]` |
+
+## Deprecated exports
+
+`registerBlockRenderer` en `unregisterBlockRenderer` zijn nog steeds geëxporteerd voor backwards compatibiliteit maar zijn `@deprecated`. Gebruik `defineBlock`. Ze worden intern aangeroepen door `defineBlock` en zijn geen publieke API meer.
 
 ## Wat NIET te doen
 
 - Gebruik `registerBlockRenderer` niet meer direct — gebruik `defineBlock`
 - Kopieer `PreviewListener` niet per project — gebruik `CmsPreviewListener` uit de SDK
-- Schrijf nooit component schemas handmatig in `cms-config.json` — dat doen `defineBlock` calls
+- Schrijf geen `components` sectie in `cms-config.json` — dat doen `defineBlock` calls
 
 ## Context
 

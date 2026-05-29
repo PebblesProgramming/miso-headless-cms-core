@@ -12,19 +12,14 @@ interface CmsBlockProps {
 }
 type BlockRenderer = React$1.ComponentType<CmsBlockProps>;
 /**
- * Register a custom renderer for a specific component slug.
- * This allows you to define how each component type should render.
+ * @deprecated Use `defineBlock` instead — it registers both the renderer and the schema in one call.
  *
- * @example
- * registerBlockRenderer('hero_section', ({ id, content, className }) => (
- *   <section className={className}>
- *     <h1>{content.title as string}</h1>
- *     <p>{content.subtitle as string}</p>
- *   </section>
- * ));
+ * Register a custom renderer for a specific component slug.
  */
 declare function registerBlockRenderer(slug: string, renderer: BlockRenderer): void;
 /**
+ * @deprecated Use `defineBlock` instead.
+ *
  * Unregister a renderer for a slug.
  */
 declare function unregisterBlockRenderer(slug: string): void;

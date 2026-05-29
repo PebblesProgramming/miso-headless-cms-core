@@ -40,6 +40,28 @@
 
 ---
 
+## CLI schema extractie via tsx subprocess
+
+**Beslissing:** `cms sync --blocks` spawnt een tsx subprocess om schemas uit het blocks bestand te lezen. Het schrijft een tijdelijk `.mts` script naar `os.tmpdir()`, voert het uit met de tsx binary uit `node_modules/.bin/tsx`, en leest het resultaat uit een tijdelijk JSON bestand.
+
+**Waarom niet dynamic import in het CLI proces zelf:** Het CLI proces is gecompileerde ESM JavaScript. Dynamisch importeren van een `.tsx` bestand met JSX zou een aparte transpiler setup vereisen in het CLI proces zelf. Een subprocess met tsx is eenvoudiger en geïsoleerder.
+
+**Waarom output file i.p.v. stdout:** Het blocks bestand kan `console.log` statements bevatten die stdout vervuilen. Een apart output bestand is betrouwbaarder dan stdout parsen.
+
+**Vereiste:** `tsx` als devDependency in het client project (`npm install -D tsx`). De CLI zoekt naar `node_modules/.bin/tsx` relatief aan `process.cwd()`.
+
+---
+
+## `registerBlockRenderer` deprecated maar niet verwijderd
+
+**Beslissing:** `registerBlockRenderer` en `unregisterBlockRenderer` zijn gemarkeerd als `@deprecated` maar nog steeds geëxporteerd.
+
+**Waarom:** Bestaande client websites (vrouwenvereniging, andere nog te migreren) gebruiken nog `registerBlockRenderer` direct. Verwijderen zou een breaking change zijn. Ze worden intern door `defineBlock` aangeroepen.
+
+**Wanneer verwijderen:** Fase 2, nadat alle client websites zijn gemigreerd naar `defineBlock`.
+
+---
+
 ## Auto-sync in npm scripts
 
 **Beslissing:** `npx cms sync` draait automatisch bij `npm run dev` en `npm run build` — niet als handmatige stap.
