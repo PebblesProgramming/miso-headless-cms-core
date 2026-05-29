@@ -7,6 +7,9 @@ export {
   type CmsBlockProps,
   type CmsPageProps,
   type PageComponentData,
+  defineBlock,
+  getRegisteredSchemas,
+  CmsPreviewListener,
 } from './components/index.js';
 
 // Field helpers

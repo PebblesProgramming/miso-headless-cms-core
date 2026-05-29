@@ -2,29 +2,16 @@
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import { execFileSync } from 'child_process';
 
 const args = process.argv.slice(2);
 const command = args[0];
 
-// Embedded template to avoid file system issues at runtime
 const CONFIG_TEMPLATE = `{
   "api": {
     "baseUrl": "https://your-cms-api.com/api",
     "apiKey": "YOUR_API_KEY"
-  },
-  "components": {
-    "hero_section": {
-      "label": "Hero Sectie",
-      "fields": [
-        { "name": "title", "type": "text", "label": "Hoofdtitel" },
-        { "name": "subtitle", "type": "textarea", "label": "Subtitel" },
-        { "name": "image", "type": "media", "label": "Achtergrond foto" }
-      ]
-    },
-    "text_area": {
-      "label": "Tekst Blok",
-      "fields": [{ "name": "content", "type": "richtext", "label": "Inhoud" }]
-    }
   },
   "pages": [
     {
@@ -44,11 +31,13 @@ cms - Headless CMS CLI
 
 Commands:
   cms init     Create cms-config.json in project root
-  cms sync     Sync config (components & pages) to CMS server
-  cms help     Show this help message
+  cms sync     Sync components & pages to CMS server
 
 Options:
   --config     Path to config file (default: ./cms-config.json)
+  --blocks     Path to cms-blocks file to read component schemas from code
+               (e.g. --blocks ./app/lib/cms-blocks.tsx)
+               Requires tsx in node_modules/.bin
 `);
 }
 
@@ -58,6 +47,14 @@ function getConfigPath(): string {
     return path.resolve(process.cwd(), args[configIndex + 1]);
   }
   return path.join(process.cwd(), 'cms-config.json');
+}
+
+function getBlocksPath(): string | null {
+  const blocksIndex = args.indexOf('--blocks');
+  if (blocksIndex !== -1 && args[blocksIndex + 1]) {
+    return path.resolve(process.cwd(), args[blocksIndex + 1]);
+  }
+  return null;
 }
 
 async function init() {
@@ -74,8 +71,58 @@ async function init() {
   console.log('Next steps:');
   console.log('  1. Update api.baseUrl with your CMS API URL');
   console.log('  2. Update api.apiKey with your project API key');
-  console.log('  3. Define your components and pages');
-  console.log('  4. Run "npx cms sync" to sync with the server');
+  console.log('  3. Define your blocks with defineBlock() in your cms-blocks file');
+  console.log('  4. Run "npx cms sync --blocks ./app/lib/cms-blocks.tsx"');
+}
+
+function getSchemasFromBlocksFile(blocksPath: string): Record<string, unknown> | never {
+  const tsxBin = path.join(process.cwd(), 'node_modules/.bin/tsx');
+
+  if (!fs.existsSync(tsxBin)) {
+    console.error(
+      'Error: tsx not found at node_modules/.bin/tsx\n' +
+      'Add tsx as a devDependency: npm install -D tsx'
+    );
+    process.exit(1);
+  }
+
+  const sdkUiPath = path.join(
+    process.cwd(),
+    'node_modules/@miso-software/headless-cms-core/dist/ui.js'
+  );
+
+  if (!fs.existsSync(sdkUiPath)) {
+    console.error('Error: @miso-software/headless-cms-core not found in node_modules');
+    process.exit(1);
+  }
+
+  const outputFile = path.join(os.tmpdir(), `_cms_schemas_${Date.now()}.json`);
+  const tempScript = path.join(os.tmpdir(), `_cms_extract_${Date.now()}.mts`);
+
+  fs.writeFileSync(tempScript, [
+    `import '${blocksPath.replace(/\\/g, '/')}';`,
+    `import { getRegisteredSchemas } from '${sdkUiPath.replace(/\\/g, '/')}';`,
+    `import { writeFileSync } from 'fs';`,
+    `writeFileSync('${outputFile.replace(/\\/g, '/')}', JSON.stringify(getRegisteredSchemas()));`,
+  ].join('\n'));
+
+  let result: Record<string, unknown>;
+  try {
+    execFileSync(tsxBin, [tempScript], {
+      cwd: process.cwd(),
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    result = JSON.parse(fs.readFileSync(outputFile, 'utf-8'));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Error reading schemas from blocks file:\n${msg}`);
+    process.exit(1);
+    throw new Error('unreachable');
+  } finally {
+    try { fs.unlinkSync(tempScript); } catch {}
+    try { fs.unlinkSync(outputFile); } catch {}
+  }
+  return result;
 }
 
 interface CmsPageConfig {
@@ -91,12 +138,13 @@ interface CmsConfig {
     baseUrl: string;
     apiKey: string;
   };
-  components: Record<string, unknown>;
+  components?: Record<string, unknown>;
   pages: CmsPageConfig[];
 }
 
 async function sync() {
   const configPath = getConfigPath();
+  const blocksPath = getBlocksPath();
 
   if (!fs.existsSync(configPath)) {
     console.error('cms-config.json not found. Run "npx cms init" first.');
@@ -105,8 +153,7 @@ async function sync() {
 
   let config: CmsConfig;
   try {
-    const content = fs.readFileSync(configPath, 'utf-8');
-    config = JSON.parse(content);
+    config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
   } catch (err) {
     console.error('Failed to parse cms-config.json:', err);
     process.exit(1);
@@ -119,6 +166,24 @@ async function sync() {
 
   if (!config.api?.apiKey || config.api.apiKey === 'YOUR_API_KEY') {
     console.error('Please configure api.apiKey in cms-config.json');
+    process.exit(1);
+  }
+
+  // Get component schemas — from blocks file (v0.2) or cms-config.json (fallback)
+  let components: Record<string, unknown>;
+  if (blocksPath) {
+    console.log(`Reading component schemas from ${path.relative(process.cwd(), blocksPath)}...`);
+    components = getSchemasFromBlocksFile(blocksPath);
+    console.log(`Found ${Object.keys(components).length} component(s): ${Object.keys(components).join(', ')}`);
+  } else if (config.components) {
+    console.log('Using components from cms-config.json (legacy mode)');
+    components = config.components;
+  } else {
+    console.error(
+      'No components found. Either:\n' +
+      '  - Use --blocks ./app/lib/cms-blocks.tsx to read from defineBlock() calls\n' +
+      '  - Or add a "components" section to cms-config.json'
+    );
     process.exit(1);
   }
 
@@ -135,10 +200,7 @@ async function sync() {
         'X-API-Key': config.api.apiKey,
         'Accept': 'application/json',
       },
-      body: JSON.stringify({
-        components: config.components,
-        pages: config.pages,
-      }),
+      body: JSON.stringify({ components, pages: config.pages }),
     });
 
     if (!response.ok) {
@@ -149,16 +211,13 @@ async function sync() {
 
     const result = await response.json();
     console.log('Sync successful');
-    if (result.message) {
-      console.log(result.message);
-    }
+    if (result.message) console.log(result.message);
   } catch (err) {
     console.error('Sync failed:', err instanceof Error ? err.message : err);
     process.exit(1);
   }
 }
 
-// Main
 if (!command || command === 'help' || command === '--help' || command === '-h') {
   showHelp();
   process.exit(0);

@@ -1,6 +1,6 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import React, { CSSProperties, ReactNode } from 'react';
-import { CmsClient, FormDefinition, FormFieldDefinition, FormSubmitResponse } from './index.js';
+import React$1, { CSSProperties, ReactNode } from 'react';
+import { FieldType, CmsClient, FormDefinition, FormFieldDefinition, FormSubmitResponse } from './index.js';
 
 interface CmsBlockProps {
     slug: string;
@@ -10,7 +10,7 @@ interface CmsBlockProps {
     style?: CSSProperties;
     children?: ReactNode;
 }
-type BlockRenderer = React.ComponentType<CmsBlockProps>;
+type BlockRenderer = React$1.ComponentType<CmsBlockProps>;
 /**
  * Register a custom renderer for a specific component slug.
  * This allows you to define how each component type should render.
@@ -76,6 +76,54 @@ interface CmsPageProps {
  * />
  */
 declare function CmsPage({ components, className, style, blockClassNames, }: CmsPageProps): react_jsx_runtime.JSX.Element;
+
+type FieldValueType<T extends string> = T extends 'text' | 'textarea' | 'richtext' | 'date' | 'select' ? string : T extends 'number' ? number : T extends 'boolean' ? boolean : T extends 'media' ? string | {
+    url: string;
+    alt?: string;
+} : T extends 'repeater' ? Record<string, unknown>[] : unknown;
+type InferContent<Fields extends readonly {
+    readonly name: string;
+    readonly type: string;
+}[]> = {
+    [K in Fields[number]['name']]: FieldValueType<Extract<Fields[number], {
+        readonly name: K;
+    }>['type']>;
+};
+interface BlockRenderProps<Content> {
+    content: Content;
+    id: number;
+    className?: string;
+    style?: CSSProperties;
+}
+type SubFieldDef = {
+    readonly name: string;
+    readonly type: Exclude<FieldType, 'repeater'>;
+    readonly label: string;
+};
+type BlockFieldDef = {
+    readonly name: string;
+    readonly type: FieldType;
+    readonly label: string;
+    readonly required?: boolean;
+    readonly options?: string[];
+    readonly sub_fields?: readonly SubFieldDef[];
+};
+interface BlockSchema {
+    label: string;
+    fields: BlockFieldDef[];
+}
+declare function defineBlock<Fields extends readonly BlockFieldDef[]>(options: {
+    slug: string;
+    label: string;
+    fields: Fields;
+    render: (props: BlockRenderProps<InferContent<Fields>>) => React.ReactElement | null;
+}): void;
+declare function getRegisteredSchemas(): Record<string, BlockSchema>;
+
+interface CmsPreviewListenerProps {
+    renderLayout: (children: ReactNode) => ReactNode;
+}
+declare function CmsPreviewListener({ renderLayout }: CmsPreviewListenerProps): react_jsx_runtime.JSX.Element | null;
 
 interface TextFieldProps {
     value: string;
@@ -224,4 +272,4 @@ declare function DefaultFormField({ field, value, onChange, error, inputClassNam
  */
 declare function validateFormData(fields: FormFieldDefinition[], data: Record<string, string | boolean>): Record<string, string>;
 
-export { CmsBlock, type CmsBlockProps, CmsForm, type CmsFormProps, CmsPage, type CmsPageProps, DefaultFormField, type FormErrors, type FormFieldRenderProps, MediaField, type MediaFieldProps, type PageComponentData, RICH_TEXT_BASE_CSS, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, registerBlockRenderer, unregisterBlockRenderer, validateFormData };
+export { CmsBlock, type CmsBlockProps, CmsForm, type CmsFormProps, CmsPage, type CmsPageProps, CmsPreviewListener, DefaultFormField, type FormErrors, type FormFieldRenderProps, MediaField, type MediaFieldProps, type PageComponentData, RICH_TEXT_BASE_CSS, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, defineBlock, getRegisteredSchemas, registerBlockRenderer, unregisterBlockRenderer, validateFormData };
