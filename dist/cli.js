@@ -12,6 +12,7 @@ var CONFIG_TEMPLATE = `{
     "baseUrl": "https://your-cms-api.com/api",
     "apiKey": "YOUR_API_KEY"
   },
+  "blocks": "./app/lib/cms-blocks.tsx",
   "pages": [
     {
       "slug": "home",
@@ -23,19 +24,36 @@ var CONFIG_TEMPLATE = `{
   ]
 }
 `;
+var BLOCKS_TEMPLATE = `import { defineBlock } from "@miso-software/headless-cms-core/ui";
+
+// Define your CMS blocks here using defineBlock().
+// Each call registers the block schema (for \`npx cms sync\`) and renderer (for CmsBlock/preview).
+//
+// defineBlock({
+//   slug: 'hero_section',
+//   label: 'Hero Sectie',
+//   fields: [
+//     { name: 'title', type: 'text', label: 'Titel' },
+//     { name: 'image', type: 'media', label: 'Afbeelding' },
+//   ] as const,
+//   render: ({ content }) => (
+//     <section>
+//       <h1>{content.title}</h1>
+//     </section>
+//   ),
+// });
+`;
 function showHelp() {
   console.log(`
 cms - Headless CMS CLI
 
 Commands:
-  cms init     Create cms-config.json in project root
+  cms init     Create cms-config.json and cms-blocks.tsx in the project
   cms sync     Sync components & pages to CMS server
 
 Options:
   --config     Path to config file (default: ./cms-config.json)
-  --blocks     Path to cms-blocks file to read component schemas from code
-               (e.g. --blocks ./app/lib/cms-blocks.tsx)
-               Requires tsx in node_modules/.bin
+  --blocks     Path to blocks file, overrides "blocks" in cms-config.json
 `);
 }
 function getConfigPath() {
@@ -45,7 +63,7 @@ function getConfigPath() {
   }
   return path.join(process.cwd(), "cms-config.json");
 }
-function getBlocksPath() {
+function getBlocksArgPath() {
   const blocksIndex = args.indexOf("--blocks");
   if (blocksIndex !== -1 && args[blocksIndex + 1]) {
     return path.resolve(process.cwd(), args[blocksIndex + 1]);
@@ -53,19 +71,26 @@ function getBlocksPath() {
   return null;
 }
 async function init() {
-  const target = getConfigPath();
-  if (fs.existsSync(target)) {
+  const configTarget = getConfigPath();
+  if (fs.existsSync(configTarget)) {
     console.error("cms-config.json already exists");
     process.exit(1);
   }
-  fs.writeFileSync(target, CONFIG_TEMPLATE, "utf-8");
-  console.log("cms-config.json created");
+  fs.writeFileSync(configTarget, CONFIG_TEMPLATE, "utf-8");
+  console.log("Created cms-config.json");
+  const blocksRelPath = "./app/lib/cms-blocks.tsx";
+  const blocksTarget = path.resolve(process.cwd(), blocksRelPath);
+  if (!fs.existsSync(blocksTarget)) {
+    fs.mkdirSync(path.dirname(blocksTarget), { recursive: true });
+    fs.writeFileSync(blocksTarget, BLOCKS_TEMPLATE, "utf-8");
+    console.log(`Created ${blocksRelPath}`);
+  }
   console.log("");
   console.log("Next steps:");
   console.log("  1. Update api.baseUrl with your CMS API URL");
   console.log("  2. Update api.apiKey with your project API key");
-  console.log("  3. Define your blocks with defineBlock() in your cms-blocks file");
-  console.log('  4. Run "npx cms sync --blocks ./app/lib/cms-blocks.tsx"');
+  console.log("  3. Define your blocks in app/lib/cms-blocks.tsx using defineBlock()");
+  console.log('  4. Run "npx cms sync"');
 }
 function getSchemasFromBlocksFile(blocksPath) {
   const tsxBin = path.join(process.cwd(), "node_modules/.bin/tsx");
@@ -118,7 +143,7 @@ ${msg}`);
 }
 async function sync() {
   const configPath = getConfigPath();
-  const blocksPath = getBlocksPath();
+  const blocksArgPath = getBlocksArgPath();
   if (!fs.existsSync(configPath)) {
     console.error('cms-config.json not found. Run "npx cms init" first.');
     process.exit(1);
@@ -138,6 +163,7 @@ async function sync() {
     console.error("Please configure api.apiKey in cms-config.json");
     process.exit(1);
   }
+  const blocksPath = blocksArgPath ?? (config.blocks ? path.resolve(process.cwd(), config.blocks) : null);
   let components;
   if (blocksPath) {
     console.log(`Reading component schemas from ${path.relative(process.cwd(), blocksPath)}...`);
@@ -148,7 +174,7 @@ async function sync() {
     components = config.components;
   } else {
     console.error(
-      'No components found. Either:\n  - Use --blocks ./app/lib/cms-blocks.tsx to read from defineBlock() calls\n  - Or add a "components" section to cms-config.json'
+      'No components found. Add a "blocks" path to cms-config.json or run "npx cms init".'
     );
     process.exit(1);
   }
