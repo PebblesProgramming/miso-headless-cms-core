@@ -111,7 +111,7 @@ function getSchemasFromBlocksFile(blocksPath) {
     process.exit(1);
   }
   const outputFile = path.join(os.tmpdir(), `_cms_schemas_${Date.now()}.json`);
-  const tempScript = path.join(os.tmpdir(), `_cms_extract_${Date.now()}.mts`);
+  const tempScript = path.join(process.cwd(), `_cms_extract_${Date.now()}.mts`);
   fs.writeFileSync(tempScript, [
     `import '${pathToFileURL(blocksPath).href}';`,
     `import { getRegisteredSchemas } from '${pathToFileURL(sdkUiPath).href}';`,
