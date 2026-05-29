@@ -48,6 +48,8 @@
 
 **Waarom output file i.p.v. stdout:** Het blocks bestand kan `console.log` statements bevatten die stdout vervuilen. Een apart output bestand is betrouwbaarder dan stdout parsen.
 
+**Blocks pad in config:** `cms-config.json` bevat een `"blocks"` veld met het pad naar het blocks bestand. `cms sync` leest dit automatisch — geen `--blocks` flag nodig. `cms init` maakt het blocks bestand ook aan. De `--blocks` flag blijft werken als override.
+
 **Vereiste:** `tsx` als devDependency in het client project (`npm install -D tsx`). De CLI zoekt naar `node_modules/.bin/tsx` relatief aan `process.cwd()`.
 
 ---

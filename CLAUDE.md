@@ -73,23 +73,26 @@ Twee modi:
 
 **v0.2 (aanbevolen):**
 ```bash
-npx cms sync --blocks ./app/lib/cms-blocks.tsx
-```
-Spawnt een tsx subprocess, importeert het blocks bestand, roept `getRegisteredSchemas()` aan voor de components. Vereist `tsx` als devDependency in het client project.
-
-**Legacy fallback:**
-```bash
 npx cms sync
 ```
-Leest `components` uit `cms-config.json`. Werkt alleen als de `components` sectie aanwezig is.
+Leest het blocks pad uit `"blocks"` in `cms-config.json`, spawnt een tsx subprocess, importeert het blocks bestand, roept `getRegisteredSchemas()` aan. Vereist `tsx` als devDependency in het client project.
+
+De `--blocks` flag overschrijft het config pad indien nodig:
+```bash
+npx cms sync --blocks ./app/lib/cms-blocks.tsx
+```
+
+**Legacy fallback:**
+Leest `components` uit `cms-config.json` als er geen `blocks` veld is.
 
 ### `cms-config.json` in client projects (v0.2)
 
-Bevat alleen `api` en `pages` — geen `components` meer:
+Bevat `api`, `blocks` (pad naar blocks bestand), en `pages`:
 
 ```json
 {
   "api": { "baseUrl": "...", "apiKey": "..." },
+  "blocks": "./app/lib/cms-blocks.tsx",
   "pages": [
     { "slug": "home", "title": "Home", "allowed_blocks": ["hero_section"] }
   ]
