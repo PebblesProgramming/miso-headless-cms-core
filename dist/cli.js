@@ -3,9 +3,7 @@
 // src/cli/index.ts
 import fs from "fs";
 import path from "path";
-import os from "os";
-import { execFileSync } from "child_process";
-import { pathToFileURL } from "url";
+import { createRequire } from "module";
 var args = process.argv.slice(2);
 var command = args[0];
 var CONFIG_TEMPLATE = `{
@@ -93,56 +91,65 @@ async function init() {
   console.log("  3. Define your blocks in app/lib/cms-blocks.tsx using defineBlock()");
   console.log('  4. Run "npx cms sync"');
 }
-function getSchemasFromBlocksFile(blocksPath) {
-  const isWindows = process.platform === "win32";
-  const tsxBin = path.join(process.cwd(), "node_modules/.bin", isWindows ? "tsx.cmd" : "tsx");
-  if (!fs.existsSync(tsxBin)) {
-    console.error(
-      "Error: tsx not found at node_modules/.bin\nAdd tsx as a devDependency: npm install -D tsx"
-    );
-    process.exit(1);
-  }
-  const sdkUiPath = path.join(
-    process.cwd(),
-    "node_modules/@miso-software/headless-cms-core/dist/ui.js"
-  );
-  if (!fs.existsSync(sdkUiPath)) {
-    console.error("Error: @miso-software/headless-cms-core not found in node_modules");
-    process.exit(1);
-  }
-  const outputFile = path.join(os.tmpdir(), `_cms_schemas_${Date.now()}.json`);
-  const tempScript = path.join(process.cwd(), `_cms_extract_${Date.now()}.mts`);
-  fs.writeFileSync(tempScript, [
-    `import '${pathToFileURL(blocksPath).href}';`,
-    `import { getRegisteredSchemas } from '${pathToFileURL(sdkUiPath).href}';`,
-    `import { writeFileSync } from 'fs';`,
-    `writeFileSync(${JSON.stringify(outputFile)}, JSON.stringify(getRegisteredSchemas()));`
-  ].join("\n"));
-  let result;
-  try {
-    execFileSync(tsxBin, [tempScript], {
-      cwd: process.cwd(),
-      stdio: ["pipe", "pipe", "pipe"],
-      shell: isWindows
-    });
-    result = JSON.parse(fs.readFileSync(outputFile, "utf-8"));
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`Error reading schemas from blocks file:
-${msg}`);
+function parseSchemasFromBlocksFile(blocksPath) {
+  const tsModulePath = path.join(process.cwd(), "node_modules/typescript");
+  if (!fs.existsSync(tsModulePath)) {
+    console.error("Error: typescript not found in node_modules. Add typescript as a devDependency.");
     process.exit(1);
     throw new Error("unreachable");
-  } finally {
-    try {
-      fs.unlinkSync(tempScript);
-    } catch {
-    }
-    try {
-      fs.unlinkSync(outputFile);
-    } catch {
-    }
   }
-  return result;
+  const projectRequire = createRequire(path.join(process.cwd(), "package.json"));
+  const ts = projectRequire("typescript");
+  const content = fs.readFileSync(blocksPath, "utf-8");
+  const sourceFile = ts.createSourceFile(
+    path.basename(blocksPath),
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  );
+  const schemas = {};
+  function extractValue(node) {
+    if (ts.isStringLiteral(node)) return node.text;
+    if (ts.isNumericLiteral(node)) return Number(node.text);
+    if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+    if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+    if (ts.isAsExpression(node)) return extractValue(node.expression);
+    if (ts.isArrayLiteralExpression(node)) return node.elements.map(extractValue);
+    if (ts.isObjectLiteralExpression(node)) {
+      const obj = {};
+      for (const prop of node.properties) {
+        if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
+          obj[prop.name.text] = extractValue(prop.initializer);
+        }
+      }
+      return obj;
+    }
+    return null;
+  }
+  function visit(node) {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "defineBlock" && node.arguments.length > 0) {
+      const arg = node.arguments[0];
+      if (ts.isObjectLiteralExpression(arg)) {
+        let slug = null;
+        let label = null;
+        let fields = null;
+        for (const prop of arg.properties) {
+          if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
+          const key = prop.name.text;
+          if (key === "slug") slug = extractValue(prop.initializer);
+          else if (key === "label") label = extractValue(prop.initializer);
+          else if (key === "fields") fields = extractValue(prop.initializer);
+        }
+        if (typeof slug === "string" && typeof label === "string" && Array.isArray(fields)) {
+          schemas[slug] = { label, fields };
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+  return schemas;
 }
 async function sync() {
   const configPath = getConfigPath();
@@ -169,8 +176,12 @@ async function sync() {
   const blocksPath = blocksArgPath ?? (config.blocks ? path.resolve(process.cwd(), config.blocks) : null);
   let components;
   if (blocksPath) {
+    if (!fs.existsSync(blocksPath)) {
+      console.error(`Blocks file not found: ${blocksPath}`);
+      process.exit(1);
+    }
     console.log(`Reading component schemas from ${path.relative(process.cwd(), blocksPath)}...`);
-    components = getSchemasFromBlocksFile(blocksPath);
+    components = parseSchemasFromBlocksFile(blocksPath);
     console.log(`Found ${Object.keys(components).length} component(s): ${Object.keys(components).join(", ")}`);
   } else if (config.components) {
     console.log("Using components from cms-config.json (legacy mode)");
