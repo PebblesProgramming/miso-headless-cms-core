@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { execFileSync } from "child_process";
+import { pathToFileURL } from "url";
 var args = process.argv.slice(2);
 var command = args[0];
 var CONFIG_TEMPLATE = `{
@@ -112,10 +113,10 @@ function getSchemasFromBlocksFile(blocksPath) {
   const outputFile = path.join(os.tmpdir(), `_cms_schemas_${Date.now()}.json`);
   const tempScript = path.join(os.tmpdir(), `_cms_extract_${Date.now()}.mts`);
   fs.writeFileSync(tempScript, [
-    `import '${blocksPath.replace(/\\/g, "/")}';`,
-    `import { getRegisteredSchemas } from '${sdkUiPath.replace(/\\/g, "/")}';`,
+    `import '${pathToFileURL(blocksPath).href}';`,
+    `import { getRegisteredSchemas } from '${pathToFileURL(sdkUiPath).href}';`,
     `import { writeFileSync } from 'fs';`,
-    `writeFileSync('${outputFile.replace(/\\/g, "/")}', JSON.stringify(getRegisteredSchemas()));`
+    `writeFileSync(${JSON.stringify(outputFile)}, JSON.stringify(getRegisteredSchemas()));`
   ].join("\n"));
   let result;
   try {
