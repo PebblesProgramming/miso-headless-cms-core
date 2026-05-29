@@ -9,6 +9,7 @@ interface FieldDefinition {
     name: string;
     type: FieldType;
     label: string;
+    single?: boolean;
     required?: boolean;
     options?: string[];
     sub_fields?: SubFieldDefinition[];

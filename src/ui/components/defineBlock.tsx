@@ -2,18 +2,19 @@ import type { CSSProperties } from 'react';
 import type { FieldType } from '../../client/types.js';
 import { registerBlockRenderer, type CmsBlockProps } from './CmsBlock.js';
 
-// Map field types to TypeScript value types
-type FieldValueType<T extends string> =
-  T extends 'text' | 'textarea' | 'richtext' | 'date' | 'select' ? string :
-  T extends 'number' ? number :
-  T extends 'boolean' ? boolean :
-  T extends 'media' ? string | { url: string; alt?: string } :
-  T extends 'repeater' ? Record<string, unknown>[] :
+// Map field definition to TypeScript value type
+// For media: single:true → string, otherwise → string[]
+type FieldValueType<F extends { readonly type: string; readonly single?: boolean }> =
+  F['type'] extends 'text' | 'textarea' | 'richtext' | 'date' | 'select' ? string :
+  F['type'] extends 'number' ? number :
+  F['type'] extends 'boolean' ? boolean :
+  F['type'] extends 'media' ? (F extends { readonly single: true } ? string : string[]) :
+  F['type'] extends 'repeater' ? Record<string, unknown>[] :
   unknown;
 
 // Infer a typed content object from a fields array (requires `as const`)
-type InferContent<Fields extends readonly { readonly name: string; readonly type: string }[]> = {
-  [K in Fields[number]['name']]: FieldValueType<Extract<Fields[number], { readonly name: K }>['type']>
+type InferContent<Fields extends readonly BlockFieldDef[]> = {
+  [K in Fields[number]['name']]: FieldValueType<Extract<Fields[number], { readonly name: K }>>
 };
 
 interface BlockRenderProps<Content> {
@@ -33,6 +34,7 @@ type BlockFieldDef = {
   readonly name: string;
   readonly type: FieldType;
   readonly label: string;
+  readonly single?: boolean;
   readonly required?: boolean;
   readonly options?: string[];
   readonly sub_fields?: readonly SubFieldDef[];

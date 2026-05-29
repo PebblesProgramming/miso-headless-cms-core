@@ -72,17 +72,16 @@ interface CmsPageProps {
  */
 declare function CmsPage({ components, className, style, blockClassNames, }: CmsPageProps): react_jsx_runtime.JSX.Element;
 
-type FieldValueType<T extends string> = T extends 'text' | 'textarea' | 'richtext' | 'date' | 'select' ? string : T extends 'number' ? number : T extends 'boolean' ? boolean : T extends 'media' ? string | {
-    url: string;
-    alt?: string;
-} : T extends 'repeater' ? Record<string, unknown>[] : unknown;
-type InferContent<Fields extends readonly {
-    readonly name: string;
+type FieldValueType<F extends {
     readonly type: string;
-}[]> = {
+    readonly single?: boolean;
+}> = F['type'] extends 'text' | 'textarea' | 'richtext' | 'date' | 'select' ? string : F['type'] extends 'number' ? number : F['type'] extends 'boolean' ? boolean : F['type'] extends 'media' ? (F extends {
+    readonly single: true;
+} ? string : string[]) : F['type'] extends 'repeater' ? Record<string, unknown>[] : unknown;
+type InferContent<Fields extends readonly BlockFieldDef[]> = {
     [K in Fields[number]['name']]: FieldValueType<Extract<Fields[number], {
         readonly name: K;
-    }>['type']>;
+    }>>;
 };
 interface BlockRenderProps<Content> {
     content: Content;
@@ -99,6 +98,7 @@ type BlockFieldDef = {
     readonly name: string;
     readonly type: FieldType;
     readonly label: string;
+    readonly single?: boolean;
     readonly required?: boolean;
     readonly options?: string[];
     readonly sub_fields?: readonly SubFieldDef[];

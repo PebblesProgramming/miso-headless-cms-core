@@ -16,6 +16,7 @@ export interface FieldDefinition {
   name: string;
   type: FieldType;
   label: string;
+  single?: boolean; // For media fields: true = single upload, false/absent = multiple
   required?: boolean;
   options?: string[]; // For select fields
   sub_fields?: SubFieldDefinition[]; // Only present when type === 'repeater'
