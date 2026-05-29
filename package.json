@@ -15,10 +15,12 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
+      "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./ui": {
       "import": "./dist/ui.js",
+      "default": "./dist/ui.js",
       "types": "./dist/ui.d.ts"
     }
   },
