@@ -106,11 +106,12 @@ async function init() {
 }
 
 function getSchemasFromBlocksFile(blocksPath: string): Record<string, unknown> | never {
-  const tsxBin = path.join(process.cwd(), 'node_modules/.bin/tsx');
+  const isWindows = process.platform === 'win32';
+  const tsxBin = path.join(process.cwd(), 'node_modules/.bin', isWindows ? 'tsx.cmd' : 'tsx');
 
   if (!fs.existsSync(tsxBin)) {
     console.error(
-      'Error: tsx not found at node_modules/.bin/tsx\n' +
+      'Error: tsx not found at node_modules/.bin\n' +
       'Add tsx as a devDependency: npm install -D tsx'
     );
     process.exit(1);
@@ -141,6 +142,7 @@ function getSchemasFromBlocksFile(blocksPath: string): Record<string, unknown> |
     execFileSync(tsxBin, [tempScript], {
       cwd: process.cwd(),
       stdio: ['pipe', 'pipe', 'pipe'],
+      shell: isWindows,
     });
     result = JSON.parse(fs.readFileSync(outputFile, 'utf-8'));
   } catch (err) {
