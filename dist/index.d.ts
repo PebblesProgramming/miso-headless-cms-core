@@ -190,6 +190,37 @@ interface AgendaEventsResponse {
         total: number;
     };
 }
+/**
+ * Site settings for a tenant, as returned by `GET /api/v1/settings`.
+ *
+ * Managed by the tenant in the CMS admin under "Site-instellingen".
+ * Every key is always present — empty fields come back as `""` (or empty
+ * nested objects), never `undefined`. Render conditionally on truthiness
+ * (e.g. only show a social icon when its URL is non-empty).
+ *
+ * `logo` and `favicon` are full URLs (or `""`), directly usable in
+ * `<img src>` / `<link rel="icon">`.
+ */
+interface SiteSettings {
+    site_name: string;
+    tagline: string;
+    /** Full URL to the logo image, or "" when unset */
+    logo: string;
+    /** Full URL to the favicon, or "" when unset */
+    favicon: string;
+    contact: {
+        email: string;
+        phone: string;
+        address: string;
+    };
+    social: {
+        facebook: string;
+        instagram: string;
+        linkedin: string;
+        twitter: string;
+        youtube: string;
+    };
+}
 interface CmsConfig {
     api: {
         baseUrl: string;
@@ -264,6 +295,21 @@ declare class CmsClient {
      * console.log(event.title, event.start_at, event.location);
      */
     getAgendaEvent(slug: string): Promise<AgendaEvent>;
+    /**
+     * Get the site settings for the tenant (name, tagline, logo, favicon,
+     * contact details, social links).
+     *
+     * Always resolves to a fully-populated object — unset fields are `""`,
+     * never `undefined` — so it is safe to access nested keys directly.
+     * Settings change rarely; cache the result (e.g. React Query with a long
+     * `staleTime`, or fetch once at app init).
+     *
+     * @example
+     * const settings = await client.getSettings();
+     * document.title = settings.site_name;
+     * if (settings.social.instagram) renderInstagramLink(settings.social.instagram);
+     */
+    getSettings(): Promise<SiteSettings>;
     /**
      * Sync local cms-config.json structure to the server
      */

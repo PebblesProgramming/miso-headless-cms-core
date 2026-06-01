@@ -21,4 +21,5 @@ export type {
   Post,
   PostsParams,
   PostsResponse,
+  SiteSettings,
 } from './types.js';

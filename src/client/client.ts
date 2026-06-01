@@ -10,6 +10,7 @@ import type {
   Post,
   PostsParams,
   PostsResponse,
+  SiteSettings,
 } from './types.js';
 
 export class CmsClient {
@@ -134,6 +135,24 @@ export class CmsClient {
    */
   async getAgendaEvent(slug: string): Promise<AgendaEvent> {
     return this.request<AgendaEvent>(`/v1/agenda/${slug}`);
+  }
+
+  /**
+   * Get the site settings for the tenant (name, tagline, logo, favicon,
+   * contact details, social links).
+   *
+   * Always resolves to a fully-populated object — unset fields are `""`,
+   * never `undefined` — so it is safe to access nested keys directly.
+   * Settings change rarely; cache the result (e.g. React Query with a long
+   * `staleTime`, or fetch once at app init).
+   *
+   * @example
+   * const settings = await client.getSettings();
+   * document.title = settings.site_name;
+   * if (settings.social.instagram) renderInstagramLink(settings.social.instagram);
+   */
+  async getSettings(): Promise<SiteSettings> {
+    return this.request<SiteSettings>('/v1/settings');
   }
 
   /**

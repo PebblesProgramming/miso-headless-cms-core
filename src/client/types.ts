@@ -233,6 +233,38 @@ export interface AgendaEventsResponse {
   };
 }
 
+/**
+ * Site settings for a tenant, as returned by `GET /api/v1/settings`.
+ *
+ * Managed by the tenant in the CMS admin under "Site-instellingen".
+ * Every key is always present — empty fields come back as `""` (or empty
+ * nested objects), never `undefined`. Render conditionally on truthiness
+ * (e.g. only show a social icon when its URL is non-empty).
+ *
+ * `logo` and `favicon` are full URLs (or `""`), directly usable in
+ * `<img src>` / `<link rel="icon">`.
+ */
+export interface SiteSettings {
+  site_name: string;
+  tagline: string;
+  /** Full URL to the logo image, or "" when unset */
+  logo: string;
+  /** Full URL to the favicon, or "" when unset */
+  favicon: string;
+  contact: {
+    email: string;
+    phone: string;
+    address: string;
+  };
+  social: {
+    facebook: string;
+    instagram: string;
+    linkedin: string;
+    twitter: string;
+    youtube: string;
+  };
+}
+
 // Config file structure (cms-config.json)
 export interface CmsConfig {
   api: {

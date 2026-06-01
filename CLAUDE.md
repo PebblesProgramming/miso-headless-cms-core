@@ -113,7 +113,9 @@ ESM only. Alleen `dist/` wordt gepubliceerd. Alle source imports gebruiken `.js`
 
 ## Client (`src/client/`)
 
-`CmsClient` met `request<T>()` methode die `X-API-Key` header toevoegt. Publieke methoden: `getPage`, `getPosts`, `getPost`, `getForm`, `submitForm`, `getAgendaEvents`, `getAgendaEvent`, `syncStructure`.
+`CmsClient` met `request<T>()` methode die `X-API-Key` header toevoegt. Publieke methoden: `getPage`, `getPosts`, `getPost`, `getForm`, `submitForm`, `getAgendaEvents`, `getAgendaEvent`, `getSettings`, `syncStructure`.
+
+`getSettings()` haalt de per-tenant site-instellingen op (`GET /v1/settings`) als `SiteSettings`: naam, tagline, logo/favicon (volledige URLs), contact en social links. Alle velden zijn altijd aanwezig; lege velden zijn `""`. Zie `context/site-settings.md`.
 
 `createCmsClient()` leest `CMS_API_URL` / `CMS_API_KEY` (of `NEXT_PUBLIC_` varianten) uit `process.env` als geen config meegegeven.
 
@@ -154,3 +156,4 @@ ESM only. Alleen `dist/` wordt gepubliceerd. Alle source imports gebruiken `.js`
 
 - `context/v0.1-architecture.md` — hoe het werkte vóór v0.2, waarom deprecated
 - `context/decisions.md` — rationale achter architectuurkeuzes
+- `context/site-settings.md` — `getSettings()` / `SiteSettings`: shape, ophalen, cachen, gebruik in layout

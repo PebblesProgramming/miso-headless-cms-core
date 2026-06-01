@@ -108,6 +108,23 @@ var CmsClient = class {
     return this.request(`/v1/agenda/${slug}`);
   }
   /**
+   * Get the site settings for the tenant (name, tagline, logo, favicon,
+   * contact details, social links).
+   *
+   * Always resolves to a fully-populated object — unset fields are `""`,
+   * never `undefined` — so it is safe to access nested keys directly.
+   * Settings change rarely; cache the result (e.g. React Query with a long
+   * `staleTime`, or fetch once at app init).
+   *
+   * @example
+   * const settings = await client.getSettings();
+   * document.title = settings.site_name;
+   * if (settings.social.instagram) renderInstagramLink(settings.social.instagram);
+   */
+  async getSettings() {
+    return this.request("/v1/settings");
+  }
+  /**
    * Sync local cms-config.json structure to the server
    */
   async syncStructure(config) {
