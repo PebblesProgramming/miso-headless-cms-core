@@ -1,6 +1,7 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import React$1, { CSSProperties, ReactNode } from 'react';
-import { FieldType, CmsClient, FormDefinition, FormFieldDefinition, FormSubmitResponse } from './index.js';
+import { FieldType, CmsClient, FormDefinition, FormFieldDefinition, FormSubmitResponse, MediaInput, MediaItem } from './index.js';
+export { MediaObject, firstMedia, isVideo, toMediaArray } from './index.js';
 
 interface CmsBlockProps {
     slug: string;
@@ -89,16 +90,24 @@ interface BlockRenderProps<Content> {
     className?: string;
     style?: CSSProperties;
 }
+type MediaAccept = 'image' | 'video' | 'any';
 type SubFieldDef = {
     readonly name: string;
     readonly type: Exclude<FieldType, 'repeater'>;
     readonly label: string;
+    readonly single?: boolean;
+    readonly accept?: MediaAccept;
+    readonly maxItems?: number;
+    readonly maxSizeMB?: number;
 };
 type BlockFieldDef = {
     readonly name: string;
     readonly type: FieldType;
     readonly label: string;
     readonly single?: boolean;
+    readonly accept?: MediaAccept;
+    readonly maxItems?: number;
+    readonly maxSizeMB?: number;
     readonly required?: boolean;
     readonly options?: string[];
     readonly sub_fields?: readonly SubFieldDef[];
@@ -132,13 +141,32 @@ interface RichTextFieldProps {
     prose?: boolean;
 }
 interface MediaFieldProps {
-    value: string | {
-        url: string;
-        alt?: string;
-    };
+    /** A string, object, or array — the first valid item is rendered. */
+    value: MediaInput;
     className?: string;
     alt?: string;
+    /** Rendered when there is no media (default: nothing). */
+    fallback?: ReactNode;
+    /** Show native controls. Defaults to `!autoPlay`. */
+    controls?: boolean;
     autoPlay?: boolean;
+    /** Defaults to `autoPlay` (browsers require muted for autoplay). */
+    muted?: boolean;
+    loop?: boolean;
+    /** Defaults to `true`. */
+    playsInline?: boolean;
+}
+interface MediaGalleryProps {
+    /** A string, object, or array — normalized to a list of items. */
+    value: MediaInput;
+    /** Class on the wrapper element. */
+    className?: string;
+    /** Class on each default-rendered item (ignored when `children` is given). */
+    itemClassName?: string;
+    /** Rendered when there are no items (default: nothing). */
+    fallback?: ReactNode;
+    /** Render-prop to control per-item markup. */
+    children?: (item: MediaItem, index: number) => ReactNode;
 }
 type FormErrors = Record<string, string>;
 interface FormFieldRenderProps {
@@ -249,11 +277,26 @@ declare const RICH_TEXT_BASE_CSS: string;
 declare function RichTextField({ value, className, prose }: RichTextFieldProps): react_jsx_runtime.JSX.Element | null;
 
 /**
- * Renders a media field (image or video).
- * Handles both string URLs and object format with url/alt.
- * Automatically detects video files by extension and renders a <video> element.
+ * Renders a SINGLE media item (image or video).
+ *
+ * Accepts a string, an object, or an **array** (uses the first item) — so it is
+ * tolerant of the CMS always returning media as a list. Video is detected by
+ * MIME type (preferred) or file extension and rendered as a `<video>`.
+ *
+ * For multiple items use `<MediaGallery>`; for a custom layout/carousel use
+ * `toMediaArray()` and render yourself.
  */
-declare function MediaField({ value, className, alt, autoPlay }: MediaFieldProps): react_jsx_runtime.JSX.Element | null;
+declare function MediaField({ value, className, alt, fallback, controls, autoPlay, muted, loop, playsInline, }: MediaFieldProps): react_jsx_runtime.JSX.Element;
+
+/**
+ * Renders MULTIPLE media items (images and/or videos).
+ *
+ * By default each item is rendered via `<MediaField>` inside a wrapper `<div>`.
+ * Pass a `children` render-prop to control the per-item markup (captions,
+ * links, lightbox triggers, …). Embeds (YouTube/Vimeo) are intentionally out of
+ * scope — build a custom block with `toMediaArray()` for those.
+ */
+declare function MediaGallery({ value, className, itemClassName, fallback, children, }: MediaGalleryProps): react_jsx_runtime.JSX.Element;
 
 declare function CmsForm({ slug, client, form: formProp, className, fieldClassName, labelClassName, inputClassName, errorClassName, buttonClassName, successClassName, errorContainerClassName, loadingClassName, submitLabel, submittingLabel, loadingContent, successContent, errorContent, renderField, onSuccess, onError, onLoadError, resetOnSuccess, children, }: CmsFormProps): react_jsx_runtime.JSX.Element | null;
 
@@ -267,4 +310,4 @@ declare function DefaultFormField({ field, value, onChange, error, inputClassNam
  */
 declare function validateFormData(fields: FormFieldDefinition[], data: Record<string, string | boolean>): Record<string, string>;
 
-export { CmsBlock, type CmsBlockProps, CmsForm, type CmsFormProps, CmsPage, type CmsPageProps, CmsPreviewListener, DefaultFormField, type FormErrors, type FormFieldRenderProps, MediaField, type MediaFieldProps, type PageComponentData, RICH_TEXT_BASE_CSS, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, defineBlock, getRegisteredSchemas, registerBlockRenderer, unregisterBlockRenderer, validateFormData };
+export { CmsBlock, type CmsBlockProps, CmsForm, type CmsFormProps, CmsPage, type CmsPageProps, CmsPreviewListener, DefaultFormField, type FormErrors, type FormFieldRenderProps, MediaField, type MediaFieldProps, MediaGallery, type MediaGalleryProps, MediaInput, MediaItem, type PageComponentData, RICH_TEXT_BASE_CSS, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, defineBlock, getRegisteredSchemas, registerBlockRenderer, unregisterBlockRenderer, validateFormData };

@@ -1,3 +1,9 @@
+import {
+  firstMedia,
+  isVideo,
+  toMediaArray
+} from "./chunk-JJ57HZPE.js";
+
 // src/client/client.ts
 var CmsClient = class {
   baseUrl;
@@ -152,5 +158,8 @@ function createCmsClient(config) {
 }
 export {
   CmsClient,
-  createCmsClient
+  createCmsClient,
+  firstMedia,
+  isVideo,
+  toMediaArray
 };

@@ -24,10 +24,16 @@ interface BlockRenderProps<Content> {
   style?: CSSProperties;
 }
 
+type MediaAccept = 'image' | 'video' | 'any';
+
 type SubFieldDef = {
   readonly name: string;
   readonly type: Exclude<FieldType, 'repeater'>;
   readonly label: string;
+  readonly single?: boolean;
+  readonly accept?: MediaAccept;
+  readonly maxItems?: number;
+  readonly maxSizeMB?: number;
 };
 
 type BlockFieldDef = {
@@ -35,6 +41,9 @@ type BlockFieldDef = {
   readonly type: FieldType;
   readonly label: string;
   readonly single?: boolean;
+  readonly accept?: MediaAccept;
+  readonly maxItems?: number;
+  readonly maxSizeMB?: number;
   readonly required?: boolean;
   readonly options?: string[];
   readonly sub_fields?: readonly SubFieldDef[];

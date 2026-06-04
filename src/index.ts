@@ -4,9 +4,16 @@ export {
   createCmsClient,
 } from './client/index.js';
 
+// Media normalization utils + types (framework-agnostic; also on ./ui)
+export { toMediaArray, firstMedia, isVideo } from './media.js';
+export type { MediaItem, MediaObject, MediaInput } from './media.js';
+
 // Type exports
 export type {
   FieldType,
+  SubFieldType,
+  MediaAccept,
+  SubFieldDefinition,
   FieldDefinition,
   ComponentDefinition,
   PageComponent,

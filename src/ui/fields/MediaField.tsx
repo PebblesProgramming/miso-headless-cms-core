@@ -1,57 +1,44 @@
 import React from 'react';
 import type { MediaFieldProps } from '../types.js';
-
-const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.mov'];
-
-function isVideoUrl(url: string): boolean {
-  const lower = url.toLowerCase();
-  return VIDEO_EXTENSIONS.some((ext) => lower.includes(ext));
-}
+import { firstMedia, isVideo } from '../../media.js';
 
 /**
- * Renders a media field (image or video).
- * Handles both string URLs and object format with url/alt.
- * Automatically detects video files by extension and renders a <video> element.
+ * Renders a SINGLE media item (image or video).
+ *
+ * Accepts a string, an object, or an **array** (uses the first item) — so it is
+ * tolerant of the CMS always returning media as a list. Video is detected by
+ * MIME type (preferred) or file extension and rendered as a `<video>`.
+ *
+ * For multiple items use `<MediaGallery>`; for a custom layout/carousel use
+ * `toMediaArray()` and render yourself.
  */
-export function MediaField({ value, className, alt = '', autoPlay = false }: MediaFieldProps) {
-  if (!value) return null;
+export function MediaField({
+  value,
+  className,
+  alt = '',
+  fallback = null,
+  controls,
+  autoPlay = false,
+  muted,
+  loop = false,
+  playsInline = true,
+}: MediaFieldProps) {
+  const item = firstMedia(value);
+  if (!item) return <>{fallback}</>;
 
-  let src: string;
-  let imgAlt: string;
-
-  if (typeof value === 'string') {
-    src = value;
-    imgAlt = alt;
-  } else if (value && typeof value === 'object') {
-    // Handle { url, alt } or any object with a url-like property
-    const obj = value as Record<string, unknown>;
-    src = (obj.url as string) || (obj.src as string) || (obj.path as string) || '';
-    imgAlt = (obj.alt as string) || alt;
-  } else {
-    return null;
-  }
-
-  if (!src) return null;
-
-  if (isVideoUrl(src)) {
+  if (isVideo(item)) {
     return (
       <video
-        src={src}
-        controls={!autoPlay}
-        autoPlay={autoPlay}
-        muted={autoPlay}
-        loop={autoPlay}
-        playsInline
+        src={item.url}
         className={className}
+        controls={controls ?? !autoPlay}
+        autoPlay={autoPlay}
+        muted={muted ?? autoPlay}
+        loop={loop}
+        playsInline={playsInline}
       />
     );
   }
 
-  return (
-    <img
-      src={src}
-      alt={imgAlt}
-      className={className}
-    />
-  );
+  return <img src={item.url} alt={item.alt ?? alt} className={className} />;
 }

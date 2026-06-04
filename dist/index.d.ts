@@ -1,15 +1,25 @@
 type FieldType = 'text' | 'textarea' | 'richtext' | 'media' | 'number' | 'boolean' | 'date' | 'select' | 'repeater';
 type SubFieldType = Exclude<FieldType, 'repeater'>;
-interface SubFieldDefinition {
+type MediaAccept = 'image' | 'video' | 'any';
+interface MediaFieldConstraints {
+    /** Media fields: true = single upload, false/absent = multiple. */
+    single?: boolean;
+    /** Which file types the CMS editor allows. Default: "any". */
+    accept?: MediaAccept;
+    /** Max number of items (only meaningful when single is false). */
+    maxItems?: number;
+    /** Max upload size per file, in megabytes. */
+    maxSizeMB?: number;
+}
+interface SubFieldDefinition extends MediaFieldConstraints {
     name: string;
     type: SubFieldType;
     label: string;
 }
-interface FieldDefinition {
+interface FieldDefinition extends MediaFieldConstraints {
     name: string;
     type: FieldType;
     label: string;
-    single?: boolean;
     required?: boolean;
     options?: string[];
     sub_fields?: SubFieldDefinition[];
@@ -327,4 +337,46 @@ declare class CmsClient {
  */
 declare function createCmsClient(config?: CmsClientConfig): CmsClient;
 
-export { type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type Page, type PageComponent, type Post, type PostsParams, type PostsResponse, createCmsClient };
+/**
+ * Media normalization — framework-agnostic, no React.
+ *
+ * The CMS returns media fields as a **list** (`["url"]`), even for single-image
+ * fields. Older/raw code coincidentally worked because JS stringifies a
+ * 1-element array to its element; components that expect a single value do not.
+ * These helpers are the single source of truth: they accept a string, an object
+ * (`{ url | src | path, ... }`), or an array of either, and normalize to a
+ * predictable `MediaItem[]` (or the first item).
+ */
+/** One normalized media item. */
+interface MediaItem {
+    url: string;
+    alt?: string;
+    /** e.g. "image/jpeg", "video/mp4" — present when the CMS supplies it. */
+    mime?: string;
+    width?: number;
+    height?: number;
+}
+/** Loosely-typed object shape the CMS may hand back for a media item. */
+interface MediaObject {
+    url?: string;
+    src?: string;
+    path?: string;
+    alt?: string;
+    mime?: string;
+    width?: number;
+    height?: number;
+}
+/** Anything a media field may contain. Always treat it as a (possible) list. */
+type MediaInput = string | MediaObject | ReadonlyArray<string | MediaObject> | null | undefined;
+/** Normalize any media value to an array of valid items (empties dropped). */
+declare function toMediaArray(input: MediaInput): MediaItem[];
+/** First valid media item, or null. Use for single-image/-video slots. */
+declare function firstMedia(input: MediaInput): MediaItem | null;
+/**
+ * Whether an item is a video. Prefers the MIME type when present, falls back to
+ * an end-anchored extension check (so a URL merely *containing* ".mov" is not a
+ * false positive).
+ */
+declare function isVideo(item: Pick<MediaItem, "url" | "mime">): boolean;
+
+export { type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type MediaAccept, type MediaInput, type MediaItem, type MediaObject, type Page, type PageComponent, type Post, type PostsParams, type PostsResponse, type SubFieldDefinition, type SubFieldType, createCmsClient, firstMedia, isVideo, toMediaArray };

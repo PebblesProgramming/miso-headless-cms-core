@@ -5,6 +5,7 @@ import type {
   FormSubmitResponse,
 } from "../client/types.js";
 import type { CmsClient } from "../client/client.js";
+import type { MediaInput, MediaItem } from "../media.js";
 
 // Base props for all CMS components
 export interface CmsComponentProps {
@@ -30,10 +31,34 @@ export interface RichTextFieldProps {
 }
 
 export interface MediaFieldProps {
-  value: string | { url: string; alt?: string };
+  /** A string, object, or array — the first valid item is rendered. */
+  value: MediaInput;
   className?: string;
   alt?: string;
+  /** Rendered when there is no media (default: nothing). */
+  fallback?: ReactNode;
+  // Video options (ignored for images):
+  /** Show native controls. Defaults to `!autoPlay`. */
+  controls?: boolean;
   autoPlay?: boolean;
+  /** Defaults to `autoPlay` (browsers require muted for autoplay). */
+  muted?: boolean;
+  loop?: boolean;
+  /** Defaults to `true`. */
+  playsInline?: boolean;
+}
+
+export interface MediaGalleryProps {
+  /** A string, object, or array — normalized to a list of items. */
+  value: MediaInput;
+  /** Class on the wrapper element. */
+  className?: string;
+  /** Class on each default-rendered item (ignored when `children` is given). */
+  itemClassName?: string;
+  /** Rendered when there are no items (default: nothing). */
+  fallback?: ReactNode;
+  /** Render-prop to control per-item markup. */
+  children?: (item: MediaItem, index: number) => ReactNode;
 }
 
 // Generic block renderer props

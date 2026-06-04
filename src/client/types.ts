@@ -4,19 +4,33 @@ export type FieldType = 'text' | 'textarea' | 'richtext' | 'media' | 'number' | 
 // Sub-field type (same as FieldType but without repeater — no nested repeaters)
 export type SubFieldType = Exclude<FieldType, 'repeater'>;
 
+// Which media a `media` field accepts (drives the CMS editor's upload filter)
+export type MediaAccept = 'image' | 'video' | 'any';
+
+// Constraints for `media` fields — synced to the CMS so the editor enforces them
+interface MediaFieldConstraints {
+  /** Media fields: true = single upload, false/absent = multiple. */
+  single?: boolean;
+  /** Which file types the CMS editor allows. Default: "any". */
+  accept?: MediaAccept;
+  /** Max number of items (only meaningful when single is false). */
+  maxItems?: number;
+  /** Max upload size per file, in megabytes. */
+  maxSizeMB?: number;
+}
+
 // Sub-field definition within a repeater field
-export interface SubFieldDefinition {
+export interface SubFieldDefinition extends MediaFieldConstraints {
   name: string;
   type: SubFieldType;
   label: string;
 }
 
 // Field definition within a component
-export interface FieldDefinition {
+export interface FieldDefinition extends MediaFieldConstraints {
   name: string;
   type: FieldType;
   label: string;
-  single?: boolean; // For media fields: true = single upload, false/absent = multiple
   required?: boolean;
   options?: string[]; // For select fields
   sub_fields?: SubFieldDefinition[]; // Only present when type === 'repeater'

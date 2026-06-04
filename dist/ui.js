@@ -1,3 +1,9 @@
+import {
+  firstMedia,
+  isVideo,
+  toMediaArray
+} from "./chunk-JJ57HZPE.js";
+
 // src/ui/components/CmsBlock.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
 var rendererRegistry = /* @__PURE__ */ new Map();
@@ -194,56 +200,59 @@ function RichTextField({ value, className, prose = false }) {
 }
 
 // src/ui/fields/MediaField.tsx
-import { jsx as jsx6 } from "react/jsx-runtime";
-var VIDEO_EXTENSIONS = [".mp4", ".webm", ".ogg", ".mov"];
-function isVideoUrl(url) {
-  const lower = url.toLowerCase();
-  return VIDEO_EXTENSIONS.some((ext) => lower.includes(ext));
-}
-function MediaField({ value, className, alt = "", autoPlay = false }) {
-  if (!value) return null;
-  let src;
-  let imgAlt;
-  if (typeof value === "string") {
-    src = value;
-    imgAlt = alt;
-  } else if (value && typeof value === "object") {
-    const obj = value;
-    src = obj.url || obj.src || obj.path || "";
-    imgAlt = obj.alt || alt;
-  } else {
-    return null;
-  }
-  if (!src) return null;
-  if (isVideoUrl(src)) {
+import { Fragment, jsx as jsx6 } from "react/jsx-runtime";
+function MediaField({
+  value,
+  className,
+  alt = "",
+  fallback = null,
+  controls,
+  autoPlay = false,
+  muted,
+  loop = false,
+  playsInline = true
+}) {
+  const item = firstMedia(value);
+  if (!item) return /* @__PURE__ */ jsx6(Fragment, { children: fallback });
+  if (isVideo(item)) {
     return /* @__PURE__ */ jsx6(
       "video",
       {
-        src,
-        controls: !autoPlay,
+        src: item.url,
+        className,
+        controls: controls ?? !autoPlay,
         autoPlay,
-        muted: autoPlay,
-        loop: autoPlay,
-        playsInline: true,
-        className
+        muted: muted ?? autoPlay,
+        loop,
+        playsInline
       }
     );
   }
-  return /* @__PURE__ */ jsx6(
-    "img",
-    {
-      src,
-      alt: imgAlt,
-      className
-    }
-  );
+  return /* @__PURE__ */ jsx6("img", { src: item.url, alt: item.alt ?? alt, className });
+}
+
+// src/ui/fields/MediaGallery.tsx
+import React from "react";
+import { Fragment as Fragment2, jsx as jsx7 } from "react/jsx-runtime";
+function MediaGallery({
+  value,
+  className,
+  itemClassName,
+  fallback = null,
+  children
+}) {
+  const items = toMediaArray(value);
+  if (items.length === 0) return /* @__PURE__ */ jsx7(Fragment2, { children: fallback });
+  return /* @__PURE__ */ jsx7("div", { className, children: items.map(
+    (item, index) => children ? /* @__PURE__ */ jsx7(React.Fragment, { children: children(item, index) }, index) : /* @__PURE__ */ jsx7(MediaField, { value: item, className: itemClassName }, index)
+  ) });
 }
 
 // src/ui/forms/CmsForm.tsx
-import React, { useState as useState2, useEffect as useEffect2, useCallback } from "react";
+import React2, { useState as useState2, useEffect as useEffect2, useCallback } from "react";
 
 // src/ui/forms/DefaultFormField.tsx
-import { jsx as jsx7, jsxs as jsxs3 } from "react/jsx-runtime";
+import { jsx as jsx8, jsxs as jsxs3 } from "react/jsx-runtime";
 function DefaultFormField({
   field,
   value,
@@ -269,7 +278,7 @@ function DefaultFormField({
   let input;
   switch (field.type) {
     case "textarea":
-      input = /* @__PURE__ */ jsx7(
+      input = /* @__PURE__ */ jsx8(
         "textarea",
         {
           ...commonInputProps,
@@ -282,7 +291,7 @@ function DefaultFormField({
       break;
     case "checkbox":
       input = /* @__PURE__ */ jsxs3("label", { className: labelClassName, style: { display: "flex", alignItems: "center", gap: "0.5rem" }, children: [
-        /* @__PURE__ */ jsx7(
+        /* @__PURE__ */ jsx8(
           "input",
           {
             ...commonInputProps,
@@ -291,8 +300,8 @@ function DefaultFormField({
             onChange: (e) => onChange(e.target.checked)
           }
         ),
-        /* @__PURE__ */ jsx7("span", { children: field.label }),
-        isRequired && /* @__PURE__ */ jsx7("span", { "aria-hidden": "true", children: " *" })
+        /* @__PURE__ */ jsx8("span", { children: field.label }),
+        isRequired && /* @__PURE__ */ jsx8("span", { "aria-hidden": "true", children: " *" })
       ] });
       break;
     case "select":
@@ -303,15 +312,15 @@ function DefaultFormField({
           value: String(value ?? ""),
           onChange: (e) => onChange(e.target.value),
           children: [
-            /* @__PURE__ */ jsx7("option", { value: "", children: field.placeholder || "Select..." }),
-            field.options?.map((opt) => /* @__PURE__ */ jsx7("option", { value: opt.value, children: opt.label }, opt.value))
+            /* @__PURE__ */ jsx8("option", { value: "", children: field.placeholder || "Select..." }),
+            field.options?.map((opt) => /* @__PURE__ */ jsx8("option", { value: opt.value, children: opt.label }, opt.value))
           ]
         }
       );
       break;
     case "radio":
-      input = /* @__PURE__ */ jsx7("div", { role: "radiogroup", "aria-labelledby": `${fieldId}-label`, children: field.options?.map((opt) => /* @__PURE__ */ jsxs3("label", { style: { display: "flex", alignItems: "center", gap: "0.5rem" }, children: [
-        /* @__PURE__ */ jsx7(
+      input = /* @__PURE__ */ jsx8("div", { role: "radiogroup", "aria-labelledby": `${fieldId}-label`, children: field.options?.map((opt) => /* @__PURE__ */ jsxs3("label", { style: { display: "flex", alignItems: "center", gap: "0.5rem" }, children: [
+        /* @__PURE__ */ jsx8(
           "input",
           {
             type: "radio",
@@ -323,11 +332,11 @@ function DefaultFormField({
             "aria-invalid": hasError ? true : void 0
           }
         ),
-        /* @__PURE__ */ jsx7("span", { children: opt.label })
+        /* @__PURE__ */ jsx8("span", { children: opt.label })
       ] }, opt.value)) });
       break;
     case "number":
-      input = /* @__PURE__ */ jsx7(
+      input = /* @__PURE__ */ jsx8(
         "input",
         {
           ...commonInputProps,
@@ -341,7 +350,7 @@ function DefaultFormField({
       );
       break;
     case "phone":
-      input = /* @__PURE__ */ jsx7(
+      input = /* @__PURE__ */ jsx8(
         "input",
         {
           ...commonInputProps,
@@ -353,7 +362,7 @@ function DefaultFormField({
       );
       break;
     case "email":
-      input = /* @__PURE__ */ jsx7(
+      input = /* @__PURE__ */ jsx8(
         "input",
         {
           ...commonInputProps,
@@ -365,7 +374,7 @@ function DefaultFormField({
       );
       break;
     case "date":
-      input = /* @__PURE__ */ jsx7(
+      input = /* @__PURE__ */ jsx8(
         "input",
         {
           ...commonInputProps,
@@ -376,7 +385,7 @@ function DefaultFormField({
       );
       break;
     default:
-      input = /* @__PURE__ */ jsx7(
+      input = /* @__PURE__ */ jsx8(
         "input",
         {
           ...commonInputProps,
@@ -391,10 +400,10 @@ function DefaultFormField({
   return /* @__PURE__ */ jsxs3("div", { className: fieldClassName, children: [
     field.type !== "checkbox" && /* @__PURE__ */ jsxs3("label", { id: `${fieldId}-label`, htmlFor: fieldId, className: labelClassName, children: [
       field.label,
-      isRequired && /* @__PURE__ */ jsx7("span", { "aria-hidden": "true", children: " *" })
+      isRequired && /* @__PURE__ */ jsx8("span", { "aria-hidden": "true", children: " *" })
     ] }),
     input,
-    hasError && /* @__PURE__ */ jsx7("div", { id: errorId, role: "alert", className: errorClassName, children: error })
+    hasError && /* @__PURE__ */ jsx8("div", { id: errorId, role: "alert", className: errorClassName, children: error })
   ] });
 }
 
@@ -490,7 +499,7 @@ function validateFormData(fields, data) {
 }
 
 // src/ui/forms/CmsForm.tsx
-import { jsx as jsx8, jsxs as jsxs4 } from "react/jsx-runtime";
+import { jsx as jsx9, jsxs as jsxs4 } from "react/jsx-runtime";
 function buildInitialData(form) {
   const data = {};
   for (const field of form.fields) {
@@ -590,29 +599,29 @@ function CmsForm({
   );
   if (status === "loading") {
     if (loadingContent) {
-      return /* @__PURE__ */ jsx8("div", { className: loadingClassName, children: loadingContent });
+      return /* @__PURE__ */ jsx9("div", { className: loadingClassName, children: loadingContent });
     }
-    return /* @__PURE__ */ jsx8("div", { className: loadingClassName, children: "Loading form..." });
+    return /* @__PURE__ */ jsx9("div", { className: loadingClassName, children: "Loading form..." });
   }
   if (status === "error" && !formDef) {
     if (errorContent) {
-      return /* @__PURE__ */ jsx8("div", { className: errorContainerClassName, children: errorContent });
+      return /* @__PURE__ */ jsx9("div", { className: errorContainerClassName, children: errorContent });
     }
-    return /* @__PURE__ */ jsx8("div", { className: errorContainerClassName, role: "alert", children: resultMessage || "Failed to load form" });
+    return /* @__PURE__ */ jsx9("div", { className: errorContainerClassName, role: "alert", children: resultMessage || "Failed to load form" });
   }
   if (!formDef) return null;
   if (status === "success") {
     if (successContent) {
-      return /* @__PURE__ */ jsx8("div", { className: successClassName, children: successContent });
+      return /* @__PURE__ */ jsx9("div", { className: successClassName, children: successContent });
     }
-    return /* @__PURE__ */ jsx8("div", { className: successClassName, role: "status", children: resultMessage });
+    return /* @__PURE__ */ jsx9("div", { className: successClassName, role: "status", children: resultMessage });
   }
   return /* @__PURE__ */ jsxs4("form", { onSubmit: handleSubmit, className, noValidate: true, children: [
     formDef.fields.map((field) => {
       const fieldValue = formData[field.name] ?? (field.type === "checkbox" ? false : "");
       const fieldError = errors[field.name];
       if (renderField) {
-        return /* @__PURE__ */ jsx8(React.Fragment, { children: renderField({
+        return /* @__PURE__ */ jsx9(React2.Fragment, { children: renderField({
           field,
           value: fieldValue,
           onChange: (val) => handleFieldChange(field.name, val),
@@ -623,7 +632,7 @@ function CmsForm({
           errorClassName
         }) }, field.name);
       }
-      return /* @__PURE__ */ jsx8(
+      return /* @__PURE__ */ jsx9(
         DefaultFormField,
         {
           field,
@@ -639,8 +648,8 @@ function CmsForm({
       );
     }),
     children,
-    status === "error" && resultMessage && /* @__PURE__ */ jsx8("div", { className: errorContainerClassName, role: "alert", children: resultMessage }),
-    /* @__PURE__ */ jsx8(
+    status === "error" && resultMessage && /* @__PURE__ */ jsx9("div", { className: errorContainerClassName, role: "alert", children: resultMessage }),
+    /* @__PURE__ */ jsx9(
       "button",
       {
         type: "submit",
@@ -658,12 +667,16 @@ export {
   CmsPreviewListener,
   DefaultFormField,
   MediaField,
+  MediaGallery,
   RICH_TEXT_BASE_CSS,
   RichTextField,
   TextField,
   defineBlock,
+  firstMedia,
   getRegisteredSchemas,
+  isVideo,
   registerBlockRenderer,
+  toMediaArray,
   unregisterBlockRenderer,
   validateFormData
 };

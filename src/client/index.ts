@@ -1,6 +1,9 @@
 export { CmsClient, createCmsClient } from './client.js';
 export type {
   FieldType,
+  SubFieldType,
+  MediaAccept,
+  SubFieldDefinition,
   FieldDefinition,
   ComponentDefinition,
   PageComponent,
