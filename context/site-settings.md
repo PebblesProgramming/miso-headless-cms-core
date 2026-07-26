@@ -27,7 +27,7 @@ interface SiteSettings {
   contact: { email: string; phone: string; address: string };
   social: {
     facebook: string; instagram: string; linkedin: string;
-    twitter: string; youtube: string;
+    twitter: string; youtube: string; tiktok: string;
   };
 }
 ```

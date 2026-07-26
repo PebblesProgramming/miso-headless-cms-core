@@ -229,6 +229,7 @@ interface SiteSettings {
         linkedin: string;
         twitter: string;
         youtube: string;
+        tiktok: string;
     };
 }
 interface CmsConfig {
