@@ -98,3 +98,31 @@
   )}
 />
 ```
+
+---
+
+## Winkelwagen client-side, voorraad gereserveerd bij checkout
+
+**Beslissing:** de winkelwagen leeft in `localStorage` via `createCart()`. De server ziet pas iets bij het afrekenen, en reserveert voorraad dan voor 30 minuten.
+
+**Waarom:** reserveren zodra iets in de winkelwagen ligt is geen standaard — WooCommerce, Shopify en Magento boeken allemaal pas af bij checkout of betaling. Cart-niveau reserveren vereist een carts-tabel plus een opruimjob aan CMS-kant, en verlaten karretjes blokkeren dan de voorraad van een kleine winkel. Met reserveren bij checkout heeft het CMS geen winkelwagen nodig en sluit de flow direct aan op een betaalprovider: order aanmaken → betaling starten → reserveren → webhook bevestigt of laat vervallen.
+
+**Gevolg:** tussen "in winkelwagen leggen" en "afrekenen" kan voorraad opraken. Daarom gooit `checkout()` een `CheckoutStockError` met per regel `{ variant_id, requested, available }`. De winkelwagen blijft geldig; toon de tekorten en laat de klant aantallen verlagen.
+
+---
+
+## De winkelwagen bewaart geen prijzen
+
+**Beslissing:** `createCart()` slaat uitsluitend `variantId` en `quantity` op. Prijzen, titels en afbeeldingen worden bij het renderen opgehaald met `getProducts()` / `getProduct()`.
+
+**Waarom:** een winkelwagen kan weken in `localStorage` staan. Bewaarde prijzen zijn dan verouderd, en omdat de server bij het afrekenen tóch herberekent zou de klant een ander bedrag betalen dan hij op zijn scherm zag. Dat is precies het soort verschil waar mensen terecht boos over worden. Door alleen ids te bewaren is de getoonde prijs altijd de geldende prijs.
+
+**Gevolg:** een winkelwagenpagina heeft een productquery nodig en moet omgaan met varianten die intussen uit de winkel zijn gehaald — die regels worden weggelaten.
+
+---
+
+## Bedragen als integer centen
+
+**Beslissing:** elk bedrag in de shop-API is een `number` in centen, inclusief BTW.
+
+**Waarom:** floats verliezen geld aan afrondingsfouten (`8.15 * 100` is `814.9999…`). Centen als integer zijn exact, en converteren precies naar het formaat dat Mollie verwacht (`"10.00"`). Formatteren gebeurt pas bij het tonen, met `Intl.NumberFormat`.

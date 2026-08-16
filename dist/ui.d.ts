@@ -1,7 +1,7 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import React$1, { CSSProperties, ReactNode } from 'react';
-import { FieldType, CmsClient, FormDefinition, FormFieldDefinition, FormSubmitResponse, MediaInput, MediaItem } from './index.js';
-export { MediaObject, firstMedia, isVideo, toMediaArray } from './index.js';
+import { FieldType, CmsClient, FormDefinition, FormFieldDefinition, FormSubmitResponse, MediaInput, MediaItem, CartLine, Cart, CartOptions } from './index.js';
+export { MediaObject, createCart, firstMedia, isVideo, toMediaArray } from './index.js';
 
 interface CmsBlockProps {
     slug: string;
@@ -310,4 +310,41 @@ declare function DefaultFormField({ field, value, onChange, error, inputClassNam
  */
 declare function validateFormData(fields: FormFieldDefinition[], data: Record<string, string | boolean>): Record<string, string>;
 
-export { CmsBlock, type CmsBlockProps, CmsForm, type CmsFormProps, CmsPage, type CmsPageProps, CmsPreviewListener, DefaultFormField, type FormErrors, type FormFieldRenderProps, MediaField, type MediaFieldProps, MediaGallery, type MediaGalleryProps, MediaInput, MediaItem, type PageComponentData, RICH_TEXT_BASE_CSS, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, defineBlock, getRegisteredSchemas, registerBlockRenderer, unregisterBlockRenderer, validateFormData };
+interface UseCartResult {
+    /** Empty on the first render during SSR/hydration — see `ready`. */
+    items: CartLine[];
+    /** Total units, for a badge. */
+    count: number;
+    /**
+     * False until localStorage has been read on the client. Render a skeleton
+     * on false rather than "your cart is empty", which would flash on every
+     * page load of a server-rendered app.
+     */
+    ready: boolean;
+    add: (variantId: number, quantity?: number) => void;
+    setQuantity: (variantId: number, quantity: number) => void;
+    remove: (variantId: number) => void;
+    clear: () => void;
+    /** Shape for `client.checkout({ items })`. */
+    toCheckoutItems: () => {
+        variant_id: number;
+        quantity: number;
+    }[];
+    /** The underlying cart, for use outside React. */
+    cart: Cart;
+}
+/**
+ * React binding for {@link createCart}.
+ *
+ * Holds no prices — look them up with `getProducts()` and join on
+ * `variantId`. See the README for a complete cart page.
+ *
+ * @example
+ * const { items, count, add, ready } = useCart();
+ *
+ * <button onClick={() => add(variant.id)}>In winkelwagen</button>
+ * {ready && count > 0 && <span className="badge">{count}</span>}
+ */
+declare function useCart(options?: CartOptions): UseCartResult;
+
+export { Cart, CartLine, CartOptions, CmsBlock, type CmsBlockProps, CmsForm, type CmsFormProps, CmsPage, type CmsPageProps, CmsPreviewListener, DefaultFormField, type FormErrors, type FormFieldRenderProps, MediaField, type MediaFieldProps, MediaGallery, type MediaGalleryProps, MediaInput, MediaItem, type PageComponentData, RICH_TEXT_BASE_CSS, RichTextField, type RichTextFieldProps, TextField, type TextFieldProps, type UseCartResult, defineBlock, getRegisteredSchemas, registerBlockRenderer, unregisterBlockRenderer, useCart, validateFormData };

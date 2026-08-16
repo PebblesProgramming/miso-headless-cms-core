@@ -1,8 +1,9 @@
 import {
+  createCart,
   firstMedia,
   isVideo,
   toMediaArray
-} from "./chunk-JJ57HZPE.js";
+} from "./chunk-JZ25O4QC.js";
 
 // src/ui/components/CmsBlock.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
@@ -660,6 +661,43 @@ function CmsForm({
     )
   ] });
 }
+
+// src/ui/cart/useCart.ts
+import { useCallback as useCallback2, useEffect as useEffect3, useMemo, useRef as useRef2, useState as useState3 } from "react";
+function useCart(options = {}) {
+  const [items, setItems] = useState3([]);
+  const [ready, setReady] = useState3(false);
+  const { storageKey, maxQuantity } = options;
+  const cartRef = useRef2(null);
+  if (cartRef.current === null) {
+    cartRef.current = createCart({ storageKey, maxQuantity });
+  }
+  const cart = cartRef.current;
+  useEffect3(() => {
+    setItems(cart.items());
+    setReady(true);
+    return cart.subscribe(setItems);
+  }, [cart]);
+  const add = useCallback2(
+    (variantId, quantity = 1) => setItems(cart.add(variantId, quantity)),
+    [cart]
+  );
+  const setQuantity = useCallback2(
+    (variantId, quantity) => setItems(cart.setQuantity(variantId, quantity)),
+    [cart]
+  );
+  const remove = useCallback2(
+    (variantId) => setItems(cart.remove(variantId)),
+    [cart]
+  );
+  const clear = useCallback2(() => setItems(cart.clear()), [cart]);
+  const count = useMemo(
+    () => items.reduce((total, line) => total + line.quantity, 0),
+    [items]
+  );
+  const toCheckoutItems = useCallback2(() => cart.toCheckoutItems(), [cart]);
+  return { items, count, ready, add, setQuantity, remove, clear, toCheckoutItems, cart };
+}
 export {
   CmsBlock,
   CmsForm,
@@ -671,6 +709,7 @@ export {
   RICH_TEXT_BASE_CSS,
   RichTextField,
   TextField,
+  createCart,
   defineBlock,
   firstMedia,
   getRegisteredSchemas,
@@ -678,5 +717,6 @@ export {
   registerBlockRenderer,
   toMediaArray,
   unregisterBlockRenderer,
+  useCart,
   validateFormData
 };

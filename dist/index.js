@@ -1,10 +1,26 @@
 import {
+  createCart,
   firstMedia,
   isVideo,
   toMediaArray
-} from "./chunk-JJ57HZPE.js";
+} from "./chunk-JZ25O4QC.js";
 
 // src/client/client.ts
+var CmsApiError = class extends Error {
+  constructor(status, body) {
+    super(`CMS API Error (${status}): ${body}`);
+    this.status = status;
+    this.body = body;
+    this.name = "CmsApiError";
+  }
+};
+var CheckoutStockError = class extends Error {
+  constructor(shortages) {
+    super("One or more items are no longer available in the requested quantity.");
+    this.shortages = shortages;
+    this.name = "CheckoutStockError";
+  }
+};
 var CmsClient = class {
   baseUrl;
   apiKey;
@@ -25,8 +41,7 @@ var CmsClient = class {
       }
     });
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`CMS API Error (${response.status}): ${error}`);
+      throw new CmsApiError(response.status, await response.text());
     }
     return response.json();
   }
@@ -131,6 +146,110 @@ var CmsClient = class {
     return this.request("/v1/settings");
   }
   /**
+   * Get a paginated list of published products.
+   *
+   * All amounts on the result are integer cents including VAT. A simple
+   * product still has one variant, so `product.variants[0]` works for both
+   * simple and variable products.
+   *
+   * @example
+   * const { data } = await client.getProducts({ category: 'jassen', in_stock: true });
+   * data.forEach(p => console.log(p.title, p.variants[0].effective_price_cents));
+   */
+  async getProducts(params = {}) {
+    const query = new URLSearchParams();
+    if (params.category) query.set("category", params.category);
+    if (params.featured) query.set("featured", "1");
+    if (params.in_stock) query.set("in_stock", "1");
+    if (params.search) query.set("search", params.search);
+    if (params.sort) query.set("sort", params.sort);
+    if (params.limit !== void 0) query.set("limit", String(params.limit));
+    if (params.page !== void 0) query.set("page", String(params.page));
+    const qs = query.toString();
+    return this.request(`/v1/products${qs ? `?${qs}` : ""}`);
+  }
+  /**
+   * Get a single published product by its slug, with variants and categories.
+   *
+   * @example
+   * const product = await client.getProduct('zomerjas');
+   * const inStock = product.variants.filter(v => !v.track_stock || v.available > 0);
+   */
+  async getProduct(slug) {
+    return this.request(`/v1/products/${slug}`);
+  }
+  /**
+   * Get the shop's categories, each with a count of published products so you
+   * can hide the empty ones.
+   */
+  async getProductCategories() {
+    const response = await this.request("/v1/product-categories");
+    return response.data;
+  }
+  /**
+   * Place an order and hold its stock.
+   *
+   * Send variant ids and quantities only — the server prices the order from
+   * the database, so any amount you include is ignored. The hold expires at
+   * `reserved_until` (30 minutes) if payment does not arrive.
+   *
+   * Throws {@link CheckoutStockError} when an item ran out in the meantime;
+   * the cart stays valid, so show the shortages and let the shopper adjust.
+   *
+   * @example
+   * try {
+   *   const order = await client.checkout({
+   *     items: cart.items.map(i => ({ variant_id: i.variantId, quantity: i.quantity })),
+   *     customer_name: 'Jan Jansen',
+   *     customer_email: 'jan@example.com',
+   *     shipping_address: {
+   *       street: 'Dorpsstraat', house_number: '1',
+   *       postal_code: '1234 AB', city: 'Amsterdam', country: 'NL',
+   *     },
+   *   });
+   *
+   *   cart.clear();
+   *   if (order.payment_url) window.location.href = order.payment_url;
+   *   else router.push(`/bestelling/${order.token}`);
+   * } catch (error) {
+   *   if (error instanceof CheckoutStockError) showShortages(error.shortages);
+   *   else throw error;
+   * }
+   */
+  async checkout(payload) {
+    try {
+      return await this.request("/v1/checkout", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      if (error instanceof CmsApiError && error.status === 409) {
+        const shortages = this.parseShortages(error.body);
+        if (shortages) throw new CheckoutStockError(shortages);
+      }
+      throw error;
+    }
+  }
+  /**
+   * Get an order by the token `checkout()` returned — for the confirmation
+   * page, and for polling until the payment lands.
+   *
+   * @example
+   * const order = await client.getOrder(token);
+   * if (order.payment_status === 'paid') showThankYou(order);
+   */
+  async getOrder(token) {
+    return this.request(`/v1/orders/${token}`);
+  }
+  parseShortages(body) {
+    try {
+      const parsed = JSON.parse(body);
+      return Array.isArray(parsed.shortages) ? parsed.shortages : null;
+    } catch {
+      return null;
+    }
+  }
+  /**
    * Sync local cms-config.json structure to the server
    */
   async syncStructure(config) {
@@ -157,7 +276,10 @@ function createCmsClient(config) {
   return new CmsClient({ baseUrl, apiKey });
 }
 export {
+  CheckoutStockError,
+  CmsApiError,
   CmsClient,
+  createCart,
   createCmsClient,
   firstMedia,
   isVideo,

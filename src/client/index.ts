@@ -1,4 +1,4 @@
-export { CmsClient, createCmsClient } from './client.js';
+export { CmsClient, createCmsClient, CmsApiError, CheckoutStockError } from './client.js';
 export type {
   FieldType,
   SubFieldType,
@@ -25,4 +25,18 @@ export type {
   PostsParams,
   PostsResponse,
   SiteSettings,
+  // Shop
+  Product,
+  ProductVariant,
+  ProductCategory,
+  ProductsParams,
+  ProductsResponse,
+  Address,
+  CheckoutPayload,
+  CheckoutResponse,
+  Order,
+  OrderItem,
+  OrderStatus,
+  PaymentStatus,
+  StockShortage,
 } from './types.js';

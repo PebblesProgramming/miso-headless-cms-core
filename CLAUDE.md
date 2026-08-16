@@ -119,6 +119,15 @@ ESM only. Alleen `dist/` wordt gepubliceerd. Alle source imports gebruiken `.js`
 
 `createCmsClient()` leest `CMS_API_URL` / `CMS_API_KEY` (of `NEXT_PUBLIC_` varianten) uit `process.env` als geen config meegegeven.
 
+**Shop-methoden:** `getProducts`, `getProduct`, `getProductCategories`, `checkout`, `getOrder`.
+
+- **Alle bedragen zijn integer centen, inclusief BTW.** Nooit floats voor geld — formatteer met `Intl.NumberFormat`.
+- Een simpel product heeft óók één variant (`name: null`). `product.variants[0]` werkt voor beide soorten; niet vertakken op `has_variants`.
+- `checkout()` stuurt alleen `variant_id` + `quantity`. De server prijst de bestelling zelf; alles wat op een bedrag lijkt in de payload wordt genegeerd.
+- Fouten zijn nu `CmsApiError` (met `status` en `body`) in plaats van een kale `Error`. De message is ongewijzigd, dus bestaande `catch` blijft werken.
+- `checkout()` gooit `CheckoutStockError` bij een 409, met `shortages: [{ variant_id, requested, available }]`. De winkelwagen blijft geldig — laat de klant aantallen verlagen in plaats van hem te legen.
+- Een bestelling houdt voorraad vast tot `reserved_until` (30 min); daarna geeft het CMS de reservering vrij.
+
 ## UI (`src/ui/`)
 
 **Rendering:** `CmsBlock` gebruikt `rendererRegistry` (Map). `CmsPage` loopt over components gesorteerd op `order`. Zonder geregistreerde renderer: raw field values + dev warning.
@@ -129,6 +138,13 @@ ESM only. Alleen `dist/` wordt gepubliceerd. Alle source imports gebruiken `.js`
 - `MediaField` — detecteert video op extensie (`.mp4`, `.webm`, `.ogg`, `.mov`); accepteert string of `{ url, alt }` object
 
 **Forms:** `CmsForm` kan eigen form ophalen (`slug` + `client`) of pre-fetched form accepteren (`form`). Validatie via `validateFormData()` spiegelt backend regels.
+
+**Winkelwagen:** `createCart()` staat in `src/cart.ts` — framework-onafhankelijk, net als `media.ts`, en geëxporteerd vanaf zowel de root als `./ui`. `useCart()` (`src/ui/cart/`) is de React-binding en is het enige deel dat React nodig heeft.
+
+- De wagen bewaart **alleen `variantId` en `quantity`** in localStorage. Zie "Wat NIET te doen".
+- `useCart().ready` is `false` tot localStorage gelezen is. Render daarop een skeleton; anders flitst "je winkelwagen is leeg" bij elke server-rendered paginalading.
+- Kapotte of vreemde localStorage-inhoud wordt bij het lezen weggefilterd — een andere tab, een oudere versie of devtools kunnen er van alles in zetten.
+- Wijzigingen in een andere tab komen binnen via het `storage`-event en gaan door dezelfde subscribers.
 
 ## Type inference
 
@@ -151,6 +167,9 @@ ESM only. Alleen `dist/` wordt gepubliceerd. Alle source imports gebruiken `.js`
 - Gebruik `registerBlockRenderer` niet meer direct — gebruik `defineBlock`
 - Kopieer `PreviewListener` niet per project — gebruik `CmsPreviewListener` uit de SDK
 - Schrijf geen `components` sectie in `cms-config.json` — dat doen `defineBlock` calls
+- **Bewaar nooit prijzen in de winkelwagen.** Een wagen die een week in localStorage staat toont dan bedragen van vorige maand, en omdat de server bij het afrekenen herberekent betaalt de klant iets anders dan hij zag. Sla alleen `variantId` op en haal de prijs bij het renderen op.
+- Reken nooit met floats over geld. Alle bedragen uit de API zijn integer centen.
+- Bouw geen eigen winkelwagen per project — gebruik `useCart()` / `createCart()`
 
 ## Context
 

@@ -29,12 +29,43 @@ interface SiteSettings {
     facebook: string; instagram: string; linkedin: string;
     twitter: string; youtube: string; tiktok: string;
   };
+  shop: {
+    currency: string;                        // ISO 4217, nu altijd "EUR"
+    default_tax_rate: number;                // 21 | 9 | 0
+    shipping_cents: number;                  // integer centen
+    free_shipping_from_cents: number | null; // null = altijd verzendkosten
+    order_email: string;
+  };
 }
 ```
 
 **Belangrijk:** elk veld is altijd aanwezig. Lege velden komen terug als `""`,
 nooit `undefined`. Render daarom conditioneel op truthiness — toon een
 social-icoon alleen als de URL niet leeg is.
+
+Dat geldt ook voor `shop`: het blok is er voor élke tenant, ook voor wie niets
+verkoopt. Test op de aanwezigheid van producten, niet op dit object.
+
+### `shop` — verzendkosten tonen vóór het afrekenen
+
+De server berekent verzendkosten zelf bij checkout. Wil je ze op de
+winkelwagenpagina al laten zien, reken dan met dezelfde regel:
+
+```ts
+const itemsTotal = lines.reduce(
+  (sum, l) => sum + l.variant.effective_price_cents * l.line.quantity, 0,
+);
+
+const { shipping_cents, free_shipping_from_cents } = settings.shop;
+
+const shipping =
+  free_shipping_from_cents !== null && itemsTotal >= free_shipping_from_cents
+    ? 0
+    : shipping_cents;
+```
+
+Het bedrag dat de klant betaalt komt altijd uit de `checkout()`-response —
+dit is alleen om het vooraf te tonen.
 
 ## Gebruik
 

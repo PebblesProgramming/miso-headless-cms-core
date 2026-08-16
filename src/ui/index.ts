@@ -32,6 +32,10 @@ export {
   validateFormData,
 } from './forms/index.js';
 
+// Shop — client-side cart
+export { createCart, useCart } from './cart/index.js';
+export type { Cart, CartLine, CartOptions, UseCartResult } from './cart/index.js';
+
 // Types
 export type {
   TextFieldProps,

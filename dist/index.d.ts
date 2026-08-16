@@ -231,6 +231,201 @@ interface SiteSettings {
         youtube: string;
         tiktok: string;
     };
+    /**
+     * Webshop settings. Present even for tenants that do not sell anything —
+     * check whether the shop has products rather than testing this object.
+     *
+     * Amounts are integer cents, like everywhere else in the shop API.
+     */
+    shop: {
+        /** ISO 4217 code, currently always "EUR" */
+        currency: string;
+        /** 21 | 9 | 0 — the default applied to new products */
+        default_tax_rate: number;
+        shipping_cents: number;
+        /** Order total from which shipping is free, or null when it never is */
+        free_shipping_from_cents: number | null;
+        order_email: string;
+    };
+}
+/**
+ * A buyable version of a product.
+ *
+ * Simple products have exactly one variant with `name: null` — you can treat
+ * `product.variants[0]` as "the product" without branching on it.
+ */
+interface ProductVariant {
+    id: number;
+    /** "Maat L / Blauw", or null on a simple product's only variant */
+    name: string | null;
+    /** Structured attributes, e.g. `{ "Maat": "L", "Kleur": "Blauw" }` */
+    options: Record<string, string> | null;
+    sku: string | null;
+    price_cents: number;
+    /** Set when the variant is on sale; `effective_price_cents` already accounts for it */
+    sale_price_cents: number | null;
+    /** The price actually charged — the sale price when there is one */
+    effective_price_cents: number;
+    /** Units left to sell: stock minus what pending orders hold */
+    available: number;
+    /** False for unlimited items such as services; `available` is then meaningless */
+    track_stock: boolean;
+}
+interface ProductCategory {
+    id: number;
+    name: string;
+    slug: string;
+    sort_order: number;
+    /** Only present on `getProductCategories()` */
+    products_count?: number;
+}
+interface Product {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string | null;
+    /** HTML from the rich text editor — render with `<RichTextField>` */
+    description: string | null;
+    /** Full image URLs, in carousel order. At most 10. */
+    images: string[] | null;
+    /** 21 | 9 | 0 — prices already include this */
+    tax_rate: number;
+    has_variants: boolean;
+    brand: string | null;
+    weight_grams: number | null;
+    featured: boolean;
+    meta_title: string | null;
+    meta_description: string | null;
+    /** ISO 8601 datetime string */
+    published_at: string;
+    variants: ProductVariant[];
+    categories: ProductCategory[];
+}
+interface ProductsParams {
+    /** Category slug */
+    category?: string;
+    featured?: boolean;
+    /** Only products with something left to sell */
+    in_stock?: boolean;
+    /** Matches title and brand */
+    search?: string;
+    /** Prefix with "-" for descending, e.g. "-price" */
+    sort?: 'price' | '-price' | 'title' | '-title' | 'created_at' | '-created_at';
+    /** Results per page (max 100, default 20) */
+    limit?: number;
+    page?: number;
+}
+interface ProductsResponse {
+    data: Product[];
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
+    meta: {
+        current_page: number;
+        from: number | null;
+        last_page: number;
+        per_page: number;
+        to: number | null;
+        total: number;
+    };
+}
+interface Address {
+    name?: string;
+    street: string;
+    house_number: string;
+    postal_code: string;
+    city: string;
+    /** Two-letter ISO country code, e.g. "NL" */
+    country: string;
+}
+/**
+ * What `checkout()` sends.
+ *
+ * Note what is absent: prices. The server looks up every amount itself, so
+ * anything money-shaped you add here is ignored.
+ */
+interface CheckoutPayload {
+    items: {
+        variant_id: number;
+        quantity: number;
+    }[];
+    customer_name: string;
+    customer_email: string;
+    customer_phone?: string;
+    customer_note?: string;
+    shipping_address: Address;
+    /** Defaults to the shipping address when omitted */
+    billing_address?: Address;
+}
+interface CheckoutResponse {
+    /** Public handle for this order — use it for the confirmation page URL */
+    token: string;
+    number: string;
+    status: OrderStatus;
+    payment_status: PaymentStatus;
+    currency: string;
+    subtotal_cents: number;
+    tax_cents: number;
+    shipping_cents: number;
+    total_cents: number;
+    /** Hosted checkout to redirect to, or null when the shop settles manually */
+    payment_url: string | null;
+    /** ISO 8601 — the stock hold expires here if payment does not arrive */
+    reserved_until: string | null;
+}
+type OrderStatus = 'pending' | 'processing' | 'shipped' | 'completed' | 'cancelled';
+type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired' | 'refunded';
+/**
+ * A line on an order.
+ *
+ * These are snapshots taken at checkout, so they keep showing what the
+ * customer bought even after the product is renamed, repriced or removed.
+ */
+interface OrderItem {
+    id: number;
+    product_variant_id: number | null;
+    product_title: string;
+    variant_name: string | null;
+    sku: string | null;
+    unit_price_cents: number;
+    tax_rate: number;
+    quantity: number;
+    line_subtotal_cents: number;
+    line_tax_cents: number;
+    line_total_cents: number;
+}
+interface Order {
+    token: string;
+    number: string;
+    status: OrderStatus;
+    payment_status: PaymentStatus;
+    customer_name: string;
+    customer_email: string;
+    customer_phone: string | null;
+    customer_note: string | null;
+    shipping_address: Address;
+    billing_address: Address | null;
+    subtotal_cents: number;
+    tax_cents: number;
+    shipping_cents: number;
+    total_cents: number;
+    currency: string;
+    payment_url: string | null;
+    /** ISO 8601 datetime strings, or null */
+    reserved_until: string | null;
+    paid_at: string | null;
+    shipped_at: string | null;
+    created_at: string;
+    items: OrderItem[];
+}
+/** One line of a 409 from `checkout()` — see `CheckoutStockError`. */
+interface StockShortage {
+    variant_id: number;
+    requested: number;
+    available: number;
 }
 interface CmsConfig {
     api: {
@@ -248,6 +443,25 @@ interface CmsConfig {
     }[];
 }
 
+/**
+ * Any non-2xx from the CMS. Carries the status and the raw body so callers
+ * can branch on it; the message is unchanged from earlier versions.
+ */
+declare class CmsApiError extends Error {
+    readonly status: number;
+    readonly body: string;
+    constructor(status: number, body: string);
+}
+/**
+ * Thrown by `checkout()` when stock ran out between browsing and paying.
+ *
+ * The cart itself is still valid — show the shortages and let the shopper
+ * lower the quantities rather than clearing it.
+ */
+declare class CheckoutStockError extends Error {
+    readonly shortages: StockShortage[];
+    constructor(shortages: StockShortage[]);
+}
 declare class CmsClient {
     private baseUrl;
     private apiKey;
@@ -322,6 +536,72 @@ declare class CmsClient {
      */
     getSettings(): Promise<SiteSettings>;
     /**
+     * Get a paginated list of published products.
+     *
+     * All amounts on the result are integer cents including VAT. A simple
+     * product still has one variant, so `product.variants[0]` works for both
+     * simple and variable products.
+     *
+     * @example
+     * const { data } = await client.getProducts({ category: 'jassen', in_stock: true });
+     * data.forEach(p => console.log(p.title, p.variants[0].effective_price_cents));
+     */
+    getProducts(params?: ProductsParams): Promise<ProductsResponse>;
+    /**
+     * Get a single published product by its slug, with variants and categories.
+     *
+     * @example
+     * const product = await client.getProduct('zomerjas');
+     * const inStock = product.variants.filter(v => !v.track_stock || v.available > 0);
+     */
+    getProduct(slug: string): Promise<Product>;
+    /**
+     * Get the shop's categories, each with a count of published products so you
+     * can hide the empty ones.
+     */
+    getProductCategories(): Promise<ProductCategory[]>;
+    /**
+     * Place an order and hold its stock.
+     *
+     * Send variant ids and quantities only — the server prices the order from
+     * the database, so any amount you include is ignored. The hold expires at
+     * `reserved_until` (30 minutes) if payment does not arrive.
+     *
+     * Throws {@link CheckoutStockError} when an item ran out in the meantime;
+     * the cart stays valid, so show the shortages and let the shopper adjust.
+     *
+     * @example
+     * try {
+     *   const order = await client.checkout({
+     *     items: cart.items.map(i => ({ variant_id: i.variantId, quantity: i.quantity })),
+     *     customer_name: 'Jan Jansen',
+     *     customer_email: 'jan@example.com',
+     *     shipping_address: {
+     *       street: 'Dorpsstraat', house_number: '1',
+     *       postal_code: '1234 AB', city: 'Amsterdam', country: 'NL',
+     *     },
+     *   });
+     *
+     *   cart.clear();
+     *   if (order.payment_url) window.location.href = order.payment_url;
+     *   else router.push(`/bestelling/${order.token}`);
+     * } catch (error) {
+     *   if (error instanceof CheckoutStockError) showShortages(error.shortages);
+     *   else throw error;
+     * }
+     */
+    checkout(payload: CheckoutPayload): Promise<CheckoutResponse>;
+    /**
+     * Get an order by the token `checkout()` returned — for the confirmation
+     * page, and for polling until the payment lands.
+     *
+     * @example
+     * const order = await client.getOrder(token);
+     * if (order.payment_status === 'paid') showThankYou(order);
+     */
+    getOrder(token: string): Promise<Order>;
+    private parseShortages;
+    /**
      * Sync local cms-config.json structure to the server
      */
     syncStructure(config: Omit<CmsConfig, 'api'>): Promise<{
@@ -380,4 +660,51 @@ declare function firstMedia(input: MediaInput): MediaItem | null;
  */
 declare function isVideo(item: Pick<MediaItem, "url" | "mime">): boolean;
 
-export { type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type MediaAccept, type MediaInput, type MediaItem, type MediaObject, type Page, type PageComponent, type Post, type PostsParams, type PostsResponse, type SubFieldDefinition, type SubFieldType, createCmsClient, firstMedia, isVideo, toMediaArray };
+/**
+ * A client-side shopping cart on localStorage.
+ *
+ * The cart deliberately stores **only** `variantId` and `quantity`. It never
+ * persists prices or titles: a cart that sat in localStorage for a week would
+ * otherwise show last month's price, and since the server reprices everything
+ * at checkout the shopper would be charged a different total than they saw.
+ * Look prices up with `getProducts()` / `getProduct()` when rendering.
+ *
+ * Framework-agnostic — see `useCart()` for the React binding.
+ */
+interface CartLine {
+    variantId: number;
+    quantity: number;
+}
+interface CartOptions {
+    /**
+     * localStorage key. Override when one origin hosts several shops.
+     *
+     * Calls sharing a key share one cart instance, so every consumer sees the
+     * same state. Options other than the key are read from the first call.
+     */
+    storageKey?: string;
+    /** Cap per line; the CMS rejects more than 100. Default 100. */
+    maxQuantity?: number;
+}
+interface Cart {
+    /** Current lines, in the order they were first added. */
+    items: () => CartLine[];
+    /** Total number of units, for a badge on the cart icon. */
+    count: () => number;
+    /** Adds to the existing quantity when the variant is already in the cart. */
+    add: (variantId: number, quantity?: number) => CartLine[];
+    /** Sets an absolute quantity; 0 or less removes the line. */
+    setQuantity: (variantId: number, quantity: number) => CartLine[];
+    remove: (variantId: number) => CartLine[];
+    clear: () => CartLine[];
+    /** Shape for `client.checkout({ items })`. */
+    toCheckoutItems: () => {
+        variant_id: number;
+        quantity: number;
+    }[];
+    /** Fires whenever the cart changes, including from another browser tab. */
+    subscribe: (listener: (items: CartLine[]) => void) => () => void;
+}
+declare function createCart(options?: CartOptions): Cart;
+
+export { type Address, type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, type Cart, type CartLine, type CartOptions, type CheckoutPayload, type CheckoutResponse, CheckoutStockError, CmsApiError, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type MediaAccept, type MediaInput, type MediaItem, type MediaObject, type Order, type OrderItem, type OrderStatus, type Page, type PageComponent, type PaymentStatus, type Post, type PostsParams, type PostsResponse, type Product, type ProductCategory, type ProductVariant, type ProductsParams, type ProductsResponse, type SiteSettings, type StockShortage, type SubFieldDefinition, type SubFieldType, createCart, createCmsClient, firstMedia, isVideo, toMediaArray };

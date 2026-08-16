@@ -2,16 +2,51 @@ import type {
   AgendaEvent,
   AgendaEventsParams,
   AgendaEventsResponse,
+  CheckoutPayload,
+  CheckoutResponse,
   CmsClientConfig,
   CmsConfig,
   FormDefinition,
   FormSubmitResponse,
+  Order,
   Page,
   Post,
   PostsParams,
   PostsResponse,
+  Product,
+  ProductCategory,
+  ProductsParams,
+  ProductsResponse,
   SiteSettings,
+  StockShortage,
 } from './types.js';
+
+/**
+ * Any non-2xx from the CMS. Carries the status and the raw body so callers
+ * can branch on it; the message is unchanged from earlier versions.
+ */
+export class CmsApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly body: string,
+  ) {
+    super(`CMS API Error (${status}): ${body}`);
+    this.name = 'CmsApiError';
+  }
+}
+
+/**
+ * Thrown by `checkout()` when stock ran out between browsing and paying.
+ *
+ * The cart itself is still valid — show the shortages and let the shopper
+ * lower the quantities rather than clearing it.
+ */
+export class CheckoutStockError extends Error {
+  constructor(public readonly shortages: StockShortage[]) {
+    super('One or more items are no longer available in the requested quantity.');
+    this.name = 'CheckoutStockError';
+  }
+}
 
 export class CmsClient {
   private baseUrl: string;
@@ -40,8 +75,7 @@ export class CmsClient {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`CMS API Error (${response.status}): ${error}`);
+      throw new CmsApiError(response.status, await response.text());
     }
 
     return response.json();
@@ -153,6 +187,116 @@ export class CmsClient {
    */
   async getSettings(): Promise<SiteSettings> {
     return this.request<SiteSettings>('/v1/settings');
+  }
+
+  /**
+   * Get a paginated list of published products.
+   *
+   * All amounts on the result are integer cents including VAT. A simple
+   * product still has one variant, so `product.variants[0]` works for both
+   * simple and variable products.
+   *
+   * @example
+   * const { data } = await client.getProducts({ category: 'jassen', in_stock: true });
+   * data.forEach(p => console.log(p.title, p.variants[0].effective_price_cents));
+   */
+  async getProducts(params: ProductsParams = {}): Promise<ProductsResponse> {
+    const query = new URLSearchParams();
+    if (params.category) query.set('category', params.category);
+    if (params.featured) query.set('featured', '1');
+    if (params.in_stock) query.set('in_stock', '1');
+    if (params.search) query.set('search', params.search);
+    if (params.sort) query.set('sort', params.sort);
+    if (params.limit !== undefined) query.set('limit', String(params.limit));
+    if (params.page !== undefined) query.set('page', String(params.page));
+    const qs = query.toString();
+    return this.request<ProductsResponse>(`/v1/products${qs ? `?${qs}` : ''}`);
+  }
+
+  /**
+   * Get a single published product by its slug, with variants and categories.
+   *
+   * @example
+   * const product = await client.getProduct('zomerjas');
+   * const inStock = product.variants.filter(v => !v.track_stock || v.available > 0);
+   */
+  async getProduct(slug: string): Promise<Product> {
+    return this.request<Product>(`/v1/products/${slug}`);
+  }
+
+  /**
+   * Get the shop's categories, each with a count of published products so you
+   * can hide the empty ones.
+   */
+  async getProductCategories(): Promise<ProductCategory[]> {
+    const response = await this.request<{ data: ProductCategory[] }>('/v1/product-categories');
+    return response.data;
+  }
+
+  /**
+   * Place an order and hold its stock.
+   *
+   * Send variant ids and quantities only — the server prices the order from
+   * the database, so any amount you include is ignored. The hold expires at
+   * `reserved_until` (30 minutes) if payment does not arrive.
+   *
+   * Throws {@link CheckoutStockError} when an item ran out in the meantime;
+   * the cart stays valid, so show the shortages and let the shopper adjust.
+   *
+   * @example
+   * try {
+   *   const order = await client.checkout({
+   *     items: cart.items.map(i => ({ variant_id: i.variantId, quantity: i.quantity })),
+   *     customer_name: 'Jan Jansen',
+   *     customer_email: 'jan@example.com',
+   *     shipping_address: {
+   *       street: 'Dorpsstraat', house_number: '1',
+   *       postal_code: '1234 AB', city: 'Amsterdam', country: 'NL',
+   *     },
+   *   });
+   *
+   *   cart.clear();
+   *   if (order.payment_url) window.location.href = order.payment_url;
+   *   else router.push(`/bestelling/${order.token}`);
+   * } catch (error) {
+   *   if (error instanceof CheckoutStockError) showShortages(error.shortages);
+   *   else throw error;
+   * }
+   */
+  async checkout(payload: CheckoutPayload): Promise<CheckoutResponse> {
+    try {
+      return await this.request<CheckoutResponse>('/v1/checkout', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      if (error instanceof CmsApiError && error.status === 409) {
+        const shortages = this.parseShortages(error.body);
+        if (shortages) throw new CheckoutStockError(shortages);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get an order by the token `checkout()` returned — for the confirmation
+   * page, and for polling until the payment lands.
+   *
+   * @example
+   * const order = await client.getOrder(token);
+   * if (order.payment_status === 'paid') showThankYou(order);
+   */
+  async getOrder(token: string): Promise<Order> {
+    return this.request<Order>(`/v1/orders/${token}`);
+  }
+
+  private parseShortages(body: string): StockShortage[] | null {
+    try {
+      const parsed = JSON.parse(body) as { shortages?: StockShortage[] };
+      return Array.isArray(parsed.shortages) ? parsed.shortages : null;
+    } catch {
+      return null;
+    }
   }
 
   /**

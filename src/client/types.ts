@@ -278,6 +278,228 @@ export interface SiteSettings {
     youtube: string;
     tiktok: string;
   };
+  /**
+   * Webshop settings. Present even for tenants that do not sell anything —
+   * check whether the shop has products rather than testing this object.
+   *
+   * Amounts are integer cents, like everywhere else in the shop API.
+   */
+  shop: {
+    /** ISO 4217 code, currently always "EUR" */
+    currency: string;
+    /** 21 | 9 | 0 — the default applied to new products */
+    default_tax_rate: number;
+    shipping_cents: number;
+    /** Order total from which shipping is free, or null when it never is */
+    free_shipping_from_cents: number | null;
+    order_email: string;
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * Shop
+ *
+ * Every amount is an integer number of cents, inclusive of VAT. Format
+ * for display with `Intl.NumberFormat`; never do arithmetic in floats.
+ * ------------------------------------------------------------------ */
+
+/**
+ * A buyable version of a product.
+ *
+ * Simple products have exactly one variant with `name: null` — you can treat
+ * `product.variants[0]` as "the product" without branching on it.
+ */
+export interface ProductVariant {
+  id: number;
+  /** "Maat L / Blauw", or null on a simple product's only variant */
+  name: string | null;
+  /** Structured attributes, e.g. `{ "Maat": "L", "Kleur": "Blauw" }` */
+  options: Record<string, string> | null;
+  sku: string | null;
+  price_cents: number;
+  /** Set when the variant is on sale; `effective_price_cents` already accounts for it */
+  sale_price_cents: number | null;
+  /** The price actually charged — the sale price when there is one */
+  effective_price_cents: number;
+  /** Units left to sell: stock minus what pending orders hold */
+  available: number;
+  /** False for unlimited items such as services; `available` is then meaningless */
+  track_stock: boolean;
+}
+
+export interface ProductCategory {
+  id: number;
+  name: string;
+  slug: string;
+  sort_order: number;
+  /** Only present on `getProductCategories()` */
+  products_count?: number;
+}
+
+export interface Product {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  /** HTML from the rich text editor — render with `<RichTextField>` */
+  description: string | null;
+  /** Full image URLs, in carousel order. At most 10. */
+  images: string[] | null;
+  /** 21 | 9 | 0 — prices already include this */
+  tax_rate: number;
+  has_variants: boolean;
+  brand: string | null;
+  weight_grams: number | null;
+  featured: boolean;
+  meta_title: string | null;
+  meta_description: string | null;
+  /** ISO 8601 datetime string */
+  published_at: string;
+  variants: ProductVariant[];
+  categories: ProductCategory[];
+}
+
+export interface ProductsParams {
+  /** Category slug */
+  category?: string;
+  featured?: boolean;
+  /** Only products with something left to sell */
+  in_stock?: boolean;
+  /** Matches title and brand */
+  search?: string;
+  /** Prefix with "-" for descending, e.g. "-price" */
+  sort?: 'price' | '-price' | 'title' | '-title' | 'created_at' | '-created_at';
+  /** Results per page (max 100, default 20) */
+  limit?: number;
+  page?: number;
+}
+
+export interface ProductsResponse {
+  data: Product[];
+  links: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+  };
+}
+
+export interface Address {
+  name?: string;
+  street: string;
+  house_number: string;
+  postal_code: string;
+  city: string;
+  /** Two-letter ISO country code, e.g. "NL" */
+  country: string;
+}
+
+/**
+ * What `checkout()` sends.
+ *
+ * Note what is absent: prices. The server looks up every amount itself, so
+ * anything money-shaped you add here is ignored.
+ */
+export interface CheckoutPayload {
+  items: { variant_id: number; quantity: number }[];
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string;
+  customer_note?: string;
+  shipping_address: Address;
+  /** Defaults to the shipping address when omitted */
+  billing_address?: Address;
+}
+
+export interface CheckoutResponse {
+  /** Public handle for this order — use it for the confirmation page URL */
+  token: string;
+  number: string;
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  currency: string;
+  subtotal_cents: number;
+  tax_cents: number;
+  shipping_cents: number;
+  total_cents: number;
+  /** Hosted checkout to redirect to, or null when the shop settles manually */
+  payment_url: string | null;
+  /** ISO 8601 — the stock hold expires here if payment does not arrive */
+  reserved_until: string | null;
+}
+
+export type OrderStatus =
+  | 'pending'
+  | 'processing'
+  | 'shipped'
+  | 'completed'
+  | 'cancelled';
+
+export type PaymentStatus =
+  | 'pending'
+  | 'paid'
+  | 'failed'
+  | 'expired'
+  | 'refunded';
+
+/**
+ * A line on an order.
+ *
+ * These are snapshots taken at checkout, so they keep showing what the
+ * customer bought even after the product is renamed, repriced or removed.
+ */
+export interface OrderItem {
+  id: number;
+  product_variant_id: number | null;
+  product_title: string;
+  variant_name: string | null;
+  sku: string | null;
+  unit_price_cents: number;
+  tax_rate: number;
+  quantity: number;
+  line_subtotal_cents: number;
+  line_tax_cents: number;
+  line_total_cents: number;
+}
+
+export interface Order {
+  token: string;
+  number: string;
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  customer_note: string | null;
+  shipping_address: Address;
+  billing_address: Address | null;
+  subtotal_cents: number;
+  tax_cents: number;
+  shipping_cents: number;
+  total_cents: number;
+  currency: string;
+  payment_url: string | null;
+  /** ISO 8601 datetime strings, or null */
+  reserved_until: string | null;
+  paid_at: string | null;
+  shipped_at: string | null;
+  created_at: string;
+  items: OrderItem[];
+}
+
+/** One line of a 409 from `checkout()` — see `CheckoutStockError`. */
+export interface StockShortage {
+  variant_id: number;
+  requested: number;
+  available: number;
 }
 
 // Config file structure (cms-config.json)
