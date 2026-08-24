@@ -143,6 +143,13 @@ export interface Post {
   content: string;
   featured_image: string | null;
   /**
+   * Optional free-text category/tag, set per post in the CMS. `null` when unset — this field
+   * is entirely optional, so existing tenants and client sites that never set it keep working
+   * unchanged. A site that wants filterable posts sets it consistently (e.g. "Use-case",
+   * "Blog") and passes the same value to `getPosts({ category })`.
+   */
+  category: string | null;
+  /**
    * Display name for the author on this post.
    * Set in the CMS per post — overrides the author's account name when present.
    * Falls back to `author.name` when null.
@@ -161,6 +168,8 @@ export interface Post {
 export interface PostsParams {
   limit?: number;
   page?: number;
+  /** Optional — filter to posts with this exact `category` value. Omit to get all posts. */
+  category?: string;
 }
 
 // Paginated posts response (Laravel paginator shape)
@@ -292,6 +301,8 @@ export interface SiteSettings {
     shipping_cents: number;
     /** Order total from which shipping is free, or null when it never is */
     free_shipping_from_cents: number | null;
+    /** Rate for the "local" delivery method on checkout() — 0 unless the tenant set one */
+    local_delivery_cents: number;
     order_email: string;
   };
 }
@@ -414,6 +425,14 @@ export interface CheckoutPayload {
   customer_email: string;
   customer_phone?: string;
   customer_note?: string;
+  /**
+   * How the order reaches the customer. Omit for shops that only ever ship —
+   * defaults server-side to `"shipping"`. `"local"` uses a separate,
+   * per-tenant rate (`shop.local_delivery_cents` from `getSettings()`) —
+   * whether an address qualifies for it (e.g. a specific town) is entirely
+   * up to the client site to decide before sending this.
+   */
+  delivery_method?: "pickup" | "local" | "shipping";
   shipping_address: Address;
   /** Defaults to the shipping address when omitted */
   billing_address?: Address;
@@ -426,6 +445,7 @@ export interface CheckoutResponse {
   status: OrderStatus;
   payment_status: PaymentStatus;
   currency: string;
+  delivery_method: "pickup" | "local" | "shipping";
   subtotal_cents: number;
   tax_cents: number;
   shipping_cents: number;
@@ -484,6 +504,7 @@ export interface Order {
   subtotal_cents: number;
   tax_cents: number;
   shipping_cents: number;
+  delivery_method: "pickup" | "local" | "shipping";
   total_cents: number;
   currency: string;
   payment_url: string | null;

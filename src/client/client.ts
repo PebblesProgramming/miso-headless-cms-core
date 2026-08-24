@@ -97,11 +97,15 @@ export class CmsClient {
    *
    * // Next page
    * const page2 = await client.getPosts({ limit: 5, page: 2 });
+   *
+   * // Only posts tagged "Use-case" — omit `category` to get everything, tagged or not
+   * const useCases = await client.getPosts({ category: 'Use-case' });
    */
   async getPosts(params: PostsParams = {}): Promise<PostsResponse> {
     const query = new URLSearchParams();
     if (params.limit !== undefined) query.set('limit', String(params.limit));
     if (params.page !== undefined) query.set('page', String(params.page));
+    if (params.category !== undefined) query.set('category', params.category);
     const qs = query.toString();
     return this.request<PostsResponse>(`/v1/posts${qs ? `?${qs}` : ''}`);
   }

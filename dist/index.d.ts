@@ -106,6 +106,13 @@ interface Post {
     content: string;
     featured_image: string | null;
     /**
+     * Optional free-text category/tag, set per post in the CMS. `null` when unset — this field
+     * is entirely optional, so existing tenants and client sites that never set it keep working
+     * unchanged. A site that wants filterable posts sets it consistently (e.g. "Use-case",
+     * "Blog") and passes the same value to `getPosts({ category })`.
+     */
+    category: string | null;
+    /**
      * Display name for the author on this post.
      * Set in the CMS per post — overrides the author's account name when present.
      * Falls back to `author.name` when null.
@@ -125,6 +132,8 @@ interface Post {
 interface PostsParams {
     limit?: number;
     page?: number;
+    /** Optional — filter to posts with this exact `category` value. Omit to get all posts. */
+    category?: string;
 }
 interface PostsResponse {
     data: Post[];
@@ -480,6 +489,9 @@ declare class CmsClient {
      *
      * // Next page
      * const page2 = await client.getPosts({ limit: 5, page: 2 });
+     *
+     * // Only posts tagged "Use-case" — omit `category` to get everything, tagged or not
+     * const useCases = await client.getPosts({ category: 'Use-case' });
      */
     getPosts(params?: PostsParams): Promise<PostsResponse>;
     /**
