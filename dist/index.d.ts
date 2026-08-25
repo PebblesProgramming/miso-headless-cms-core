@@ -254,6 +254,8 @@ interface SiteSettings {
         shipping_cents: number;
         /** Order total from which shipping is free, or null when it never is */
         free_shipping_from_cents: number | null;
+        /** Rate for the "local" delivery method on checkout() — 0 unless the tenant set one */
+        local_delivery_cents: number;
         order_email: string;
     };
 }
@@ -365,6 +367,14 @@ interface CheckoutPayload {
     customer_email: string;
     customer_phone?: string;
     customer_note?: string;
+    /**
+     * How the order reaches the customer. Omit for shops that only ever ship —
+     * defaults server-side to `"shipping"`. `"local"` uses a separate,
+     * per-tenant rate (`shop.local_delivery_cents` from `getSettings()`) —
+     * whether an address qualifies for it (e.g. a specific town) is entirely
+     * up to the client site to decide before sending this.
+     */
+    delivery_method?: "pickup" | "local" | "shipping";
     shipping_address: Address;
     /** Defaults to the shipping address when omitted */
     billing_address?: Address;
@@ -376,6 +386,7 @@ interface CheckoutResponse {
     status: OrderStatus;
     payment_status: PaymentStatus;
     currency: string;
+    delivery_method: "pickup" | "local" | "shipping";
     subtotal_cents: number;
     tax_cents: number;
     shipping_cents: number;
@@ -420,6 +431,7 @@ interface Order {
     subtotal_cents: number;
     tax_cents: number;
     shipping_cents: number;
+    delivery_method: "pickup" | "local" | "shipping";
     total_cents: number;
     currency: string;
     payment_url: string | null;
