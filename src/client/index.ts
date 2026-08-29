@@ -39,4 +39,5 @@ export type {
   OrderStatus,
   PaymentStatus,
   StockShortage,
+  OrderWebhookPayload,
 } from './types.js';

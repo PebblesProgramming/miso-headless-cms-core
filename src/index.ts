@@ -55,4 +55,5 @@ export type {
   OrderStatus,
   PaymentStatus,
   StockShortage,
+  OrderWebhookPayload,
 } from './client/index.js';

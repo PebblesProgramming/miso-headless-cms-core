@@ -417,6 +417,18 @@ interface OrderItem {
     line_tax_cents: number;
     line_total_cents: number;
 }
+/**
+ * Body of the `order.paid` webhook miso-cms POSTs to a tenant's configured
+ * `WebhookEndpoint` when an order is marked paid — only sent for tenants
+ * that opted out of the CMS's own confirmation mail. `order` is the exact
+ * same shape `getOrder()` returns. Verify the `X-Miso-Signature` header with
+ * `verifyOrderWebhookSignature` (from `@miso-software/headless-cms-core/webhooks`)
+ * before trusting this payload.
+ */
+interface OrderWebhookPayload {
+    event: 'order.paid';
+    order: Order;
+}
 interface Order {
     token: string;
     number: string;
@@ -731,4 +743,4 @@ interface Cart {
 }
 declare function createCart(options?: CartOptions): Cart;
 
-export { type Address, type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, type Cart, type CartLine, type CartOptions, type CheckoutPayload, type CheckoutResponse, CheckoutStockError, CmsApiError, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type MediaAccept, type MediaInput, type MediaItem, type MediaObject, type Order, type OrderItem, type OrderStatus, type Page, type PageComponent, type PaymentStatus, type Post, type PostsParams, type PostsResponse, type Product, type ProductCategory, type ProductVariant, type ProductsParams, type ProductsResponse, type SiteSettings, type StockShortage, type SubFieldDefinition, type SubFieldType, createCart, createCmsClient, firstMedia, isVideo, toMediaArray };
+export { type Address, type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, type Cart, type CartLine, type CartOptions, type CheckoutPayload, type CheckoutResponse, CheckoutStockError, CmsApiError, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type MediaAccept, type MediaInput, type MediaItem, type MediaObject, type Order, type OrderItem, type OrderStatus, type OrderWebhookPayload, type Page, type PageComponent, type PaymentStatus, type Post, type PostsParams, type PostsResponse, type Product, type ProductCategory, type ProductVariant, type ProductsParams, type ProductsResponse, type SiteSettings, type StockShortage, type SubFieldDefinition, type SubFieldType, createCart, createCmsClient, firstMedia, isVideo, toMediaArray };

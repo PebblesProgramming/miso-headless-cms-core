@@ -490,6 +490,19 @@ export interface OrderItem {
   line_total_cents: number;
 }
 
+/**
+ * Body of the `order.paid` webhook miso-cms POSTs to a tenant's configured
+ * `WebhookEndpoint` when an order is marked paid — only sent for tenants
+ * that opted out of the CMS's own confirmation mail. `order` is the exact
+ * same shape `getOrder()` returns. Verify the `X-Miso-Signature` header with
+ * `verifyOrderWebhookSignature` (from `@miso-software/headless-cms-core/webhooks`)
+ * before trusting this payload.
+ */
+export interface OrderWebhookPayload {
+  event: 'order.paid';
+  order: Order;
+}
+
 export interface Order {
   token: string;
   number: string;
