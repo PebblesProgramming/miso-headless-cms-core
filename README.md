@@ -76,6 +76,32 @@ await cms.submitForm("contact", {
 });
 ```
 
+### Mailing (newsletter sign-up)
+
+Requires the `mailing` module to be switched on for the tenant in the CMS
+(otherwise 403).
+
+```typescript
+import { CmsApiError } from "@miso-software/headless-cms-core";
+
+try {
+  await cms.subscribeToMailing({
+    email: "jan@example.com",
+    name: "Jan",            // optional
+    tags: ["footer"],       // optional — e.g. where they signed up
+  });
+  // Always the same answer, also for addresses already on the list:
+  showMessage("Check je inbox om je inschrijving te bevestigen.");
+} catch (error) {
+  if (error instanceof CmsApiError && error.status === 422) showError("Ongeldig e-mailadres");
+  else if (error instanceof CmsApiError && error.status === 429) showError("Probeer het zo nog eens");
+  else throw error;
+}
+```
+
+Double opt-in: the CMS sends the confirmation mail and hosts the confirm and
+unsubscribe pages itself — the client site only needs the form.
+
 ### Shop
 
 ```typescript

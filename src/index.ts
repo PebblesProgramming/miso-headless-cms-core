@@ -29,6 +29,8 @@ export type {
   FormFieldValidation,
   FormFieldDefinition,
   FormSubmitResponse,
+  MailingSubscribePayload,
+  MailingSubscribeResponse,
   FormDefinition,
   ApiResponse,
   CmsClientConfig,

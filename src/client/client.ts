@@ -8,6 +8,8 @@ import type {
   CmsConfig,
   FormDefinition,
   FormSubmitResponse,
+  MailingSubscribePayload,
+  MailingSubscribeResponse,
   Order,
   Page,
   Post,
@@ -139,6 +141,33 @@ export class CmsClient {
         body: JSON.stringify(data),
       }
     );
+  }
+
+  /**
+   * Sign a visitor up for the tenant's mailing list (newsletter).
+   *
+   * Always double opt-in: the CMS sends a confirmation mail and the contact
+   * is only subscribed once they click it. The response is the same whether
+   * the address was new or already on the list, so always show the same
+   * message ("check your inbox to confirm").
+   *
+   * Throws {@link CmsApiError} with status 422 for an invalid address, 403
+   * when the tenant doesn't have the mailing module, 429 when rate limited.
+   *
+   * @example
+   * try {
+   *   await client.subscribeToMailing({ email, name, tags: ['footer'] });
+   *   setMessage('Check je inbox om je inschrijving te bevestigen.');
+   * } catch (error) {
+   *   if (error instanceof CmsApiError && error.status === 422) setError('Ongeldig e-mailadres');
+   *   else throw error;
+   * }
+   */
+  async subscribeToMailing(payload: MailingSubscribePayload): Promise<MailingSubscribeResponse> {
+    return this.request<MailingSubscribeResponse>('/v1/mailing/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   /**

@@ -70,6 +70,25 @@ interface FormSubmitResponse {
     message: string;
     submission_id: number;
 }
+/** Payload for `subscribeToMailing()`. */
+interface MailingSubscribePayload {
+    email: string;
+    name?: string;
+    /**
+     * Free-text tags (max 20, 50 chars each), e.g. where the visitor signed up
+     * (`'footer'`, `'actiepagina'`). Editors can send a campaign to a tag.
+     */
+    tags?: string[];
+}
+/**
+ * Always the same, whatever state the address was in — new, already
+ * subscribed or unsubscribed — so the endpoint can't reveal who is on a list.
+ * The contact only counts as subscribed after clicking the link in the
+ * confirmation mail (double opt-in).
+ */
+interface MailingSubscribeResponse {
+    status: 'pending_confirmation';
+}
 interface FormDefinition {
     id: number;
     name: string;
@@ -535,6 +554,27 @@ declare class CmsClient {
      */
     submitForm(slug: string, data: Record<string, unknown>): Promise<FormSubmitResponse>;
     /**
+     * Sign a visitor up for the tenant's mailing list (newsletter).
+     *
+     * Always double opt-in: the CMS sends a confirmation mail and the contact
+     * is only subscribed once they click it. The response is the same whether
+     * the address was new or already on the list, so always show the same
+     * message ("check your inbox to confirm").
+     *
+     * Throws {@link CmsApiError} with status 422 for an invalid address, 403
+     * when the tenant doesn't have the mailing module, 429 when rate limited.
+     *
+     * @example
+     * try {
+     *   await client.subscribeToMailing({ email, name, tags: ['footer'] });
+     *   setMessage('Check je inbox om je inschrijving te bevestigen.');
+     * } catch (error) {
+     *   if (error instanceof CmsApiError && error.status === 422) setError('Ongeldig e-mailadres');
+     *   else throw error;
+     * }
+     */
+    subscribeToMailing(payload: MailingSubscribePayload): Promise<MailingSubscribeResponse>;
+    /**
      * Get a paginated list of agenda events for the tenant.
      * By default returns published events ordered by start_at ascending.
      *
@@ -743,4 +783,4 @@ interface Cart {
 }
 declare function createCart(options?: CartOptions): Cart;
 
-export { type Address, type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, type Cart, type CartLine, type CartOptions, type CheckoutPayload, type CheckoutResponse, CheckoutStockError, CmsApiError, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type MediaAccept, type MediaInput, type MediaItem, type MediaObject, type Order, type OrderItem, type OrderStatus, type OrderWebhookPayload, type Page, type PageComponent, type PaymentStatus, type Post, type PostsParams, type PostsResponse, type Product, type ProductCategory, type ProductVariant, type ProductsParams, type ProductsResponse, type SiteSettings, type StockShortage, type SubFieldDefinition, type SubFieldType, createCart, createCmsClient, firstMedia, isVideo, toMediaArray };
+export { type Address, type AgendaEvent, type AgendaEventStatus, type AgendaEventsParams, type AgendaEventsResponse, type ApiResponse, type Cart, type CartLine, type CartOptions, type CheckoutPayload, type CheckoutResponse, CheckoutStockError, CmsApiError, CmsClient, type CmsClientConfig, type CmsConfig, type ComponentDefinition, type FieldDefinition, type FieldType, type FormDefinition, type FormFieldDefinition, type FormFieldOption, type FormFieldType, type FormFieldValidation, type FormSubmitResponse, type MailingSubscribePayload, type MailingSubscribeResponse, type MediaAccept, type MediaInput, type MediaItem, type MediaObject, type Order, type OrderItem, type OrderStatus, type OrderWebhookPayload, type Page, type PageComponent, type PaymentStatus, type Post, type PostsParams, type PostsResponse, type Product, type ProductCategory, type ProductVariant, type ProductsParams, type ProductsResponse, type SiteSettings, type StockShortage, type SubFieldDefinition, type SubFieldType, createCart, createCmsClient, firstMedia, isVideo, toMediaArray };

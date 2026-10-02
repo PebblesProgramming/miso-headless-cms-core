@@ -94,6 +94,27 @@ export interface FormSubmitResponse {
   submission_id: number;
 }
 
+/** Payload for `subscribeToMailing()`. */
+export interface MailingSubscribePayload {
+  email: string;
+  name?: string;
+  /**
+   * Free-text tags (max 20, 50 chars each), e.g. where the visitor signed up
+   * (`'footer'`, `'actiepagina'`). Editors can send a campaign to a tag.
+   */
+  tags?: string[];
+}
+
+/**
+ * Always the same, whatever state the address was in — new, already
+ * subscribed or unsubscribed — so the endpoint can't reveal who is on a list.
+ * The contact only counts as subscribed after clicking the link in the
+ * confirmation mail (double opt-in).
+ */
+export interface MailingSubscribeResponse {
+  status: 'pending_confirmation';
+}
+
 // Form definition from the CMS
 export interface FormDefinition {
   id: number;
